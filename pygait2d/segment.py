@@ -17,7 +17,7 @@ class BodySegment(object):
         label : string
             A short label for the segment, like 'A'.
         description : string
-            A short description of the segement, like 'Trunk')
+            A short description of the segment, like 'Trunk'.
         parent_reference_frame : sympy.physics.vector.ReferenceFrame
             The parent reference frame for this segment.
         origin_joint : sympy.physics.vector.Point
@@ -25,7 +25,9 @@ class BodySegment(object):
         joint_description : string
             A short description of the new joint, e.g. 'knee'.
         inertial_frame : sympy.physics.mechanics.ReferenceFrame
-            The inertial reference frame the segment is in.
+            The inertial reference frame the segment is in. This is used to
+            apply gravity to the segment (in the negative y direction of
+            this frame).
 
         """
 
@@ -43,13 +45,14 @@ class BodySegment(object):
         self._locate_joint()
         self._locate_mass_center()
         self._set_linear_velocities()
-        self._inertia_dyad()
+        self._inertia_dyadic()
         self._create_rigid_body()
         self._joint_torque()
         self._gravity()
 
     def _create_symbols(self):
-        """Generates all of the SymPy symbols associated with this segment."""
+        """Generates all of the SymPy symbols and functions of time
+        associated with this segment."""
 
         subscript = self.label.lower()
 
@@ -75,7 +78,7 @@ class BodySegment(object):
             me.dynamicsymbols('q{}'.format(subscript), 1)
         self.generalized_speed_symbol = \
             me.dynamicsymbols('u{}'.format(subscript))
-        self.joint_torque_symbol = me.dynamicsymbols('M{}'.format(subscript))
+        self.joint_torque_symbol = me.dynamicsymbols('T{}'.format(subscript))
 
     def _kinematic_differential_equations(self):
         """Creates a list of the kinematic differential equations. We simply
@@ -120,23 +123,27 @@ class BodySegment(object):
         self.joint.v2pt_theory(self.origin_joint, self.inertial_frame,
                                self.parent_reference_frame)
 
-    def _inertia_dyad(self):
-        """Creates an inertia dyad for the segment."""
-        self.inertia = me.inertia(self.reference_frame, 0, 0,
-                                  self.inertia_symbol)
+    def _inertia_dyadic(self):
+        """Creates an inertia dyadic for the segment."""
+        self.inertia_dyadic = me.inertia(self.reference_frame, 0, 0,
+                                         self.inertia_symbol)
 
     def _create_rigid_body(self):
         """Creates a rigid body for the segment."""
         self.rigid_body = me.RigidBody(self.description, self.mass_center,
                                        self.reference_frame,
                                        self.mass_symbol,
-                                       (self.inertia, self.mass_center))
+                                       (self.inertia_dyadic, self.mass_center))
 
     def _joint_torque(self):
-        """Creates the joint torque acting on the segment."""
+        """Creates the joint torque vector acting on the segment."""
         self.torque = self.joint_torque_symbol * self.reference_frame.z
 
+        # TODO : This is the torque vector which is applied to this segment,
+        # but the negative of it should be applied to the parent segement.
+
     def _gravity(self):
+        """Creates the gravitational force vector acting on the segment."""
         self.gravity = -self.mass_symbol * self.g * self.inertial_frame.y
 
 
@@ -147,6 +154,7 @@ class TrunkSegment(BodySegment):
 
     def _create_symbols(self):
         super(TrunkSegment, self)._create_symbols()
+        # TODO : Format these with the subscript instead of a directly.
         self.qa = me.dynamicsymbols('qax, qay')
         self.ua = me.dynamicsymbols('uax, uay')
 
@@ -246,10 +254,6 @@ def contact_force(point, ground, origin):
     # deformation = {
     #               { abs(y_location) if y_location < 0
     #
-    # TODO: Ideally this would be translated to an if statement in the
-    # generated numerical code. This is a symoblic "hack" to get around
-    # that. SymPy has sympy.functions.special.delta_functions.Heaviside
-    # which could be potentially be used here.
 
     penetration = (abs(y_location) - y_location) / 2
 

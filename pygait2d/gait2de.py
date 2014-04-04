@@ -17,15 +17,15 @@ def derive_equations_of_motion(trig_simp=False):
     ==========
     trig_simp : boolean, optional, default=False
         trigsimp will be applied to each expression in the mass matrix and
-        forcing vector. This will slow the derivation down.
+        forcing vector. This will slow the derivation down but give smaller
+        expressions. TODO: May be smarter to do this on each component that
+        buils the EoMs instead of at the end.
 
 
     Returns
     ==========
-    mass_matrix : sympy.matrices.dense.MutableDenseMatrix, shape(n,n)
-        The symbolic mass matrix of the system.
-    forcing_vector : sympy.matrices.dense.MutableDenseMatrix, shape(n,1)
-        The symbolic forcing vector of the system.
+    kane : sympy.physics.mechanics.Kane
+        A Kane object in which the EoMs have been derived.
     constants : list of sympy.core.symbol.Symbol
         The constants in the equations of motion.
     coordinates : list of sympy.core.function.Function
@@ -145,6 +145,4 @@ def derive_equations_of_motion(trig_simp=False):
             print("Simplifying forcing expression {}".format(i))
             kane.forcing_full[i] = expression.trigsimp()
 
-
-    return (kane.mass_matrix_full, kane.forcing_full, constants,
-            coordinates, speeds, specified)
+    return kane, constants, coordinates, speeds, specified
