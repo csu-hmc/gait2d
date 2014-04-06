@@ -16,3 +16,16 @@ that the model can be used for studies such as Ackermann and van den Bogert
 For more complex 3D models, see, for instance, the Opensim project
 (www.simtk.org/home/opensim).  These more complex models will probably execute
 significantly slower and may not be twice differentiable.
+
+# algait2de #
+
+To manually build the model and use in Python:
+
+```
+$ al gait2de.al
+$ python autolevclean.py
+$ python setup.py build_ext --inplace
+$ python
+>>> import gait2de
+>>> gait2de.evaluate_autolev_rhs(...)
+```
