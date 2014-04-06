@@ -3,11 +3,9 @@ cimport numpy as np
 
 cdef extern from "gait2de.h":
 
-    # might need to match
-    #cdef enum:
-        #NDOF = 9
-        #NMOM = 6
-        #NSTICK = 10
+    cdef enum:
+        NDOF = 9
+        NSTICK = 10
 
     ctypedef struct param_struct:
         double TrunkMass
@@ -34,12 +32,12 @@ cdef extern from "gait2de.h":
         double ContactFric
 
     void gait2d_al(param_struct* par,
-                   double q[9],
-                   double qd[9],
-                   double qdd[9],
-                   double mom[9],
+                   double q[NDOF],
+                   double qd[NDOF],
+                   double qdd[NDOF],
+                   double mom[NDOF],
                    double GRF[6],
-                   double Stick[20])
+                   double Stick[10 * NDOF])
 
 
 def evaluate_autolev_rhs(np.ndarray[np.double_t, ndim=1, mode='c'] generalized_coordinates,
@@ -134,7 +132,6 @@ def evaluate_autolev_rhs(np.ndarray[np.double_t, ndim=1, mode='c'] generalized_c
         ContactDamp=constants['ContactDamp'],
         ContactV0=constants['ContactV0'],
         ContactFric=constants['ContactFric'])
-
 
     # TODO: Should allow the option to pass these in, instead of creating a
     # new array on each call to this function. It would be faster.
