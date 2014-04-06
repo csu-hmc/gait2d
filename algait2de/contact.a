@@ -1,0 +1,22 @@
+% Function: calculates and applies force to a point P
+% This is the same contact model that was used in Ackermann & van den Bogert, 2010
+%
+% contact(P)
+%
+
+% calculate deformation d which is always positive
+y#1# = dot(P_GroundO_#1#>, Ground2>)
+d#1# = 0.5*(abs(y#1#) - y#1#)
+
+% get speed of contact point
+xdot#1# = dot(V_#1#_Ground>, Ground1>)
+ydot#1# = dot(V_#1#_Ground>, Ground2>)
+
+% vertical force, cubic with a linear 1 N/m bidirectional term and multiplicative linear damping
+Fy#1# = (par__ContactStiff * d#1#^3 - y#1#) * (1 - par__ContactDamp*ydot#1#)
+
+% friction, using logistic function
+Fx#1# = -par__ContactFric * Fy#1# * ((2/(1+exp(-xdot#1#/par__ContactV0)))-1)
+
+F#1#> = Fx#1#*Ground1> + Fy#1#*Ground2>		% create force vector
+Force_#1#> += F#1#>							% apply 2D force vector to point P
