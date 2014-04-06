@@ -37,7 +37,7 @@ cdef extern from "gait2de.h":
                    double qdd[NDOF],
                    double mom[NDOF],
                    double GRF[6],
-                   double Stick[10 * NDOF])
+                   double Stick[2 * NSTICK])
 
 
 def evaluate_autolev_rhs(np.ndarray[np.double_t, ndim=1, mode='c'] generalized_coordinates,
