@@ -57,14 +57,13 @@ class BodySegment(object):
         subscript = self.label.lower()
 
         # constants
-        self.g = symbols('g', real=True)
-        self.mass_symbol = symbols('m{}'.format(subscript), real=True,
-                                   positive=True)
+        self.g = symbols('g')
+        self.mass_symbol = symbols('m{}'.format(subscript))
         self.inertia_symbol = \
-            symbols('i{}'.format(subscript), real=True, positive=True)
+            symbols('i{}'.format(subscript))
         self.length_symbol = \
-            symbols('l{}'.format(subscript), real=True, positive=True)
-        self.mass_center_x_symbol = symbols('x{}'.format(subscript), real=True)
+            symbols('l{}'.format(subscript))
+        self.mass_center_x_symbol = symbols('x{}'.format(subscript))
         self.mass_center_y_symbol = symbols('y{}'.format(subscript))
 
         self.constants = [self.g, self.mass_symbol, self.inertia_symbol,
@@ -138,6 +137,8 @@ class BodySegment(object):
     def _joint_torque(self):
         """Creates the joint torque vector acting on the segment."""
         self.torque = self.joint_torque_symbol * self.reference_frame.z
+        # TODO : add in passive joint stiffness and damping
+
 
         # TODO : This is the torque vector which is applied to this segment,
         # but the negative of it should be applied to the parent segement.
@@ -157,6 +158,8 @@ class TrunkSegment(BodySegment):
         # TODO : Format these with the subscript instead of a directly.
         self.qa = me.dynamicsymbols('qax, qay')
         self.ua = me.dynamicsymbols('uax, uay')
+        self.constants.remove(self.length_symbol)
+        del self.length_symbol
 
     def _trunk_extra_kinematic_equations(self):
         qaxd, qayd = me.dynamicsymbols('qax, qay', 1)
@@ -190,6 +193,9 @@ class FootSegment(BodySegment):
         self.heel_distance = symbols('hx{}'.format(self.label.lower()))
         self.toe_distance = symbols('tx{}'.format(self.label.lower()))
         self.foot_depth = symbols('fy{}'.format(self.label.lower()))
+
+        self.constants.remove(self.length_symbol)
+        del self.length_symbol
 
         self.constants += [self.heel_distance, self.toe_distance, self.foot_depth]
 
