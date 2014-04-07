@@ -176,14 +176,25 @@ class TrunkSegment(BodySegment):
 
     def _locate_joint(self):
         """The trunk only has one joint, the hip, there is no other point."""
+        # This locates the hip joint relative to the ground origin point.
         self.joint = self.origin_joint.locatenew(self.joint_description,
                                                  self.qa[0] *
                                                  self.inertial_frame.x +
                                                  self.qa[1] *
                                                  self.inertial_frame.y)
 
+    def _locate_mass_center(self):
+        """Creates a point with respect the hip joint for the mass center
+        of the segment."""
+        self.mass_center = self.joint.locatenew(
+            '{} mass center'.format(self.description),
+            self.mass_center_x_symbol * self.reference_frame.x +
+            self.mass_center_y_symbol * self.reference_frame.y)
+
     def _set_linear_velocities(self):
         """Sets the linear velocities of the mass center and new joint."""
+        # TODO: check these for correctness.
+        # The joint is the hip. The origin joint is the ground's origin.
         self.joint.set_vel(self.inertial_frame, self.ua[0] *
                            self.inertial_frame.x + self.ua[1] *
                            self.inertial_frame.y)

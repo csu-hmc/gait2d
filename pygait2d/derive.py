@@ -65,6 +65,8 @@ def derive_equations_of_motion(trig_simp=False):
             parent_reference_frame = ground
             origin_joint = origin
         elif label == 'E':  # left thigh
+            # For the left thigh, set the trunk and hip as the
+            # reference_frame and origin joint.
             parent_reference_frame = segments[0].reference_frame
             origin_joint = segments[0].joint
         else:  # thighs, shanks
