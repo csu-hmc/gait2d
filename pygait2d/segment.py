@@ -66,8 +66,11 @@ class BodySegment(object):
         self.mass_center_x_symbol = symbols('x{}'.format(subscript))
         self.mass_center_y_symbol = symbols('y{}'.format(subscript))
 
-        self.constants = [self.g, self.mass_symbol, self.inertia_symbol,
-                          self.length_symbol, self.mass_center_x_symbol,
+        self.constants = [self.g,
+                          self.mass_symbol,
+                          self.inertia_symbol,
+                          self.length_symbol,
+                          self.mass_center_x_symbol,
                           self.mass_center_y_symbol]
 
         # functions of time
@@ -80,8 +83,12 @@ class BodySegment(object):
         self.joint_torque_symbol = me.dynamicsymbols('T{}'.format(subscript))
 
     def _kinematic_differential_equations(self):
-        """Creates a list of the kinematic differential equations. We simply
-        chose u = qdot."""
+        """Creates a list of the kinematic differential equations. This is
+        the simple definition:
+
+        0 = \dot{q}_i - u_i
+
+        """
         self.kinematic_equations = \
             [self.generalized_coordinate_derivative_symbol -
              self.generalized_speed_symbol]
@@ -90,9 +97,10 @@ class BodySegment(object):
         """Generates and orients the segment's reference frame relative to
         the parent reference frame by body fixed simple rotation about the
         generalized coordinate."""
-        self.reference_frame = self.parent_reference_frame.orientnew(
-            self.label, 'Axis', (self.generalized_coordinate_symbol,
-                                 self.parent_reference_frame.z))
+        self.reference_frame = \
+            self.parent_reference_frame.orientnew(
+                self.label, 'Axis', (self.generalized_coordinate_symbol,
+                                     self.parent_reference_frame.z))
 
     def _set_angular_velocity(self):
         """Sets the angular velocity with the generalized speed."""
@@ -102,7 +110,8 @@ class BodySegment(object):
 
     def _locate_joint(self):
         """Creates a point with respect to the origin joint for the next
-        joint in the segment."""
+        joint in the segment. This assumes that new joint is in the negative
+        y direction with repect to the origin joint."""
         self.joint = self.origin_joint.locatenew(self.joint_description,
                                                  -self.length_symbol *
                                                  self.reference_frame.y)
@@ -118,9 +127,9 @@ class BodySegment(object):
     def _set_linear_velocities(self):
         """Sets the linear velocities of the mass center and new joint."""
         self.mass_center.v2pt_theory(self.origin_joint, self.inertial_frame,
-                                     self.parent_reference_frame)
+                                     self.reference_frame)
         self.joint.v2pt_theory(self.origin_joint, self.inertial_frame,
-                               self.parent_reference_frame)
+                               self.reference_frame)
 
     def _inertia_dyadic(self):
         """Creates an inertia dyadic for the segment."""
@@ -179,7 +188,7 @@ class TrunkSegment(BodySegment):
                            self.inertial_frame.x + self.ua[1] *
                            self.inertial_frame.y)
         self.mass_center.v2pt_theory(self.joint, self.inertial_frame,
-                                     self.parent_reference_frame)
+                                     self.reference_frame)
 
 
 class FootSegment(BodySegment):
@@ -222,11 +231,11 @@ class FootSegment(BodySegment):
     def _set_foot_linear_velocities(self):
         """Sets the linear velocities of the mass center and new joint."""
         self.mass_center.v2pt_theory(self.origin_joint, self.inertial_frame,
-                                     self.parent_reference_frame)
+                                     self.reference_frame)
         self.heel.v2pt_theory(self.origin_joint, self.inertial_frame,
-                              self.parent_reference_frame)
+                              self.reference_frame)
         self.toe.v2pt_theory(self.origin_joint, self.inertial_frame,
-                             self.parent_reference_frame)
+                             self.reference_frame)
 
 
 def contact_force(point, ground, origin):
