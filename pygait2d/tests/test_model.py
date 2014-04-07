@@ -8,6 +8,7 @@ import numpy as np
 from numpy import testing
 from pydy_code_gen.code import generate_ode_function
 
+# local imports
 from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
 from pygait2d import derive, simulate
 
@@ -22,9 +23,9 @@ coordinate_values = np.random.random(9)
 speed_values = np.random.random(9)
 specified_values = np.random.random(9)
 
-coordinate_values = np.arange(9.0)
-speed_values = np.arange(9.0)
-specified_values = np.arange(9.0)
+coordinate_values = np.random.random(9)
+speed_values = np.random.random(9)
+specified_values = np.random.random(9)
 
 constant_values = simulate.load_constants('data/example_constants.yml')
 args = {'constants': np.array([constant_values[c] for c in constants]),
