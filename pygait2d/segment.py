@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # external libraries
-from sympy import symbols, exp
+from sympy import symbols, exp, acos, pi
 import sympy.physics.mechanics as me
+from pydy.viz import VisualizationFrame, Cylinder, Sphere
 
 
 class BodySegment(object):
+
+    viz_sphere_radius = 0.07
+    viz_cylinder_radius = 0.035
 
     def __init__(self, label, description, parent_reference_frame,
                  origin_joint, joint_description, inertial_frame):
@@ -21,12 +25,13 @@ class BodySegment(object):
         parent_reference_frame : sympy.physics.vector.ReferenceFrame
             The parent reference frame for this segment.
         origin_joint : sympy.physics.vector.Point
-            The joint which connects this segment to its parent.
+            The point where this segment is connected to its parent.
         joint_description : string
-            A short description of the new joint, e.g. 'knee'.
+            A short description of a new joint point, e.g. 'knee', for this
+            segemt to attach to its child segment.
         inertial_frame : sympy.physics.mechanics.ReferenceFrame
-            The inertial reference frame the segment is in. This is used to
-            apply gravity to the segment (in the negative y direction of
+            The global inertial reference frame of the system. This is used
+            to apply gravity to the segment (in the negative y direction of
             this frame).
 
         """
@@ -148,13 +153,35 @@ class BodySegment(object):
         self.torque = self.joint_torque_symbol * self.reference_frame.z
         # TODO : add in passive joint stiffness and damping
 
-
-        # TODO : This is the torque vector which is applied to this segment,
-        # but the negative of it should be applied to the parent segement.
-
     def _gravity(self):
         """Creates the gravitational force vector acting on the segment."""
         self.gravity = -self.mass_symbol * self.g * self.inertial_frame.y
+
+    def visualization_frames(self):
+        """Returns visualization frames for the animation of the system.
+        The requires numerical values of the cylinders and spheres."""
+
+        viz_frames = []
+
+        cylinder = Cylinder(color='red',
+                            length=self.length_symbol,
+                            radius=self.viz_cylinder_radius)
+
+        center_point = self.origin_joint.locatenew('Cylinder Center',
+                                                   -self.length_symbol / 2 *
+                                                   self.reference_frame.y)
+
+        viz_frames.append(VisualizationFrame('VizFrame',
+                                             self.reference_frame,
+                                             center_point, cylinder))
+
+        viz_frames.append(VisualizationFrame('OriginJointFrame',
+                                             self.reference_frame,
+                                             self.origin_joint,
+                                             Sphere(color='blue',
+                                                    radius=self.viz_sphere_radius)))
+
+        return viz_frames
 
 
 class TrunkSegment(BodySegment):
@@ -193,7 +220,6 @@ class TrunkSegment(BodySegment):
 
     def _set_linear_velocities(self):
         """Sets the linear velocities of the mass center and new joint."""
-        # TODO: check these for correctness.
         # The joint is the hip. The origin joint is the ground's origin.
         self.joint.set_vel(self.inertial_frame, self.ua[0] *
                            self.inertial_frame.x + self.ua[1] *
@@ -201,8 +227,39 @@ class TrunkSegment(BodySegment):
         self.mass_center.v2pt_theory(self.joint, self.inertial_frame,
                                      self.reference_frame)
 
+    def visualization_frames(self):
+        """This should go from the hip to the mass center."""
+
+        viz_frames = []
+
+        hip_to_mc_vector = self.mass_center.pos_from(self.joint)
+
+        cylinder = Cylinder(color='red', length=hip_to_mc_vector.magnitude(),
+                            radius=self.viz_cylinder_radius)
+
+        center_point = \
+            self.joint.locatenew('Cylinder Center',
+                                 hip_to_mc_vector.magnitude() / 2 *
+                                 hip_to_mc_vector.normalize())
+
+        viz_frames.append(VisualizationFrame('VizFrame',
+                                             self.reference_frame,
+                                             center_point, cylinder))
+
+        viz_frames.append(VisualizationFrame('MassCenterFrame',
+                                             self.reference_frame,
+                                             self.mass_center,
+                                             Sphere(color='blue',
+                                                    radius=self.viz_sphere_radius)))
+
+        return viz_frames
+
 
 class FootSegment(BodySegment):
+
+    viz_sphere_radius = 0.03
+    viz_cylinder_radius = 0.01
+
     def __init__(self, *args):
         super(FootSegment, self).__init__(*args)
         self._locate_foot_points()
@@ -217,7 +274,8 @@ class FootSegment(BodySegment):
         self.constants.remove(self.length_symbol)
         del self.length_symbol
 
-        self.constants += [self.heel_distance, self.toe_distance, self.foot_depth]
+        self.constants += [self.heel_distance, self.toe_distance,
+                           self.foot_depth]
 
     def _locate_joint(self):
         """The foot has no joint."""
@@ -247,6 +305,78 @@ class FootSegment(BodySegment):
                               self.reference_frame)
         self.toe.v2pt_theory(self.origin_joint, self.inertial_frame,
                              self.reference_frame)
+
+    def visualization_frames(self):
+        """Returns a list of visualization frames needed to visualize the
+        foot."""
+
+        viz_frames = []
+
+        heel_to_toe_length = self.toe.pos_from(self.heel).magnitude()
+        bottom_cylinder = Cylinder(color='red',
+                                   length=heel_to_toe_length,
+                                   radius=self.viz_cylinder_radius)
+        bottom_center_point = self.heel.locatenew('BottomCenter',
+                                                  heel_to_toe_length / 2 *
+                                                  self.reference_frame.x)
+        # Creates a reference frame with the Y axis pointing from the heel
+        # to the toe.
+        bottom_rf = self.reference_frame.orientnew('Bottom', 'Axis',
+                                                   (-pi / 2,
+                                                    self.reference_frame.z))
+        viz_frames.append(VisualizationFrame('BottomVizFrame',
+                                             bottom_rf,
+                                             bottom_center_point,
+                                             bottom_cylinder))
+
+        # top of foot
+        ankle_to_toe_vector = self.toe.pos_from(self.origin_joint)
+        top_cylinder = Cylinder(color='red',
+                                length=ankle_to_toe_vector.magnitude(),
+                                radius=self.viz_cylinder_radius)
+        angle = -acos(ankle_to_toe_vector.normalize().dot(bottom_rf.y))
+        top_foot_rf = bottom_rf.orientnew('Top', 'Axis', (angle,
+                                                          bottom_rf.z))
+        top_foot_center_point = \
+            self.origin_joint.locatenew('TopCenter',
+                                        ankle_to_toe_vector.magnitude() / 2
+                                        * top_foot_rf.y)
+        viz_frames.append(VisualizationFrame('TopVizFrame', top_foot_rf,
+                                             top_foot_center_point,
+                                             top_cylinder))
+
+        # back of foot
+        heel_to_ankle_vector = self.origin_joint.pos_from(self.heel)
+        back_cylinder = Cylinder(color='red',
+                                 length=heel_to_ankle_vector.magnitude(),
+                                 radius=self.viz_cylinder_radius)
+        angle = acos(heel_to_ankle_vector.normalize().dot(bottom_rf.y))
+        back_foot_rf = bottom_rf.orientnew('Back', 'Axis', (angle,
+                                                            bottom_rf.z))
+        back_foot_center_point = \
+            self.heel.locatenew('BackCenter',
+                                heel_to_ankle_vector.magnitude() / 2 *
+                                back_foot_rf.y)
+        viz_frames.append(VisualizationFrame('BackVizFrame', back_foot_rf,
+                                             back_foot_center_point,
+                                             back_cylinder))
+
+        # spheres for the ankle, toe, and heel
+        viz_frames.append(VisualizationFrame('AnkleVizFrame',
+                                             self.reference_frame,
+                                             self.origin_joint,
+                                             Sphere(color='blue',
+                                                    radius=self.viz_sphere_radius)))
+        viz_frames.append(VisualizationFrame('ToeVizFrame',
+                                             self.reference_frame, self.toe,
+                                             Sphere(color='blue',
+                                                    radius=self.viz_sphere_radius)))
+        viz_frames.append(VisualizationFrame('HeelVizFrame',
+                                             self.reference_frame, self.heel,
+                                             Sphere(color='blue',
+                                                    radius=self.viz_sphere_radius)))
+
+        return viz_frames
 
 
 def contact_force(point, ground, origin):

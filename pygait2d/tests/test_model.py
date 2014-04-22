@@ -6,22 +6,18 @@ model."""
 import yaml
 import numpy as np
 from numpy import testing
-from pydy_code_gen.code import generate_ode_function
+from pydy.codegen.code import generate_ode_function
 
 # local imports
 from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
 from pygait2d import derive, simulate
 
-kane, constants, coordinates, speeds, specified = \
-    derive.derive_equations_of_motion()
+(mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
+ specified, visualization_frames, ground, origin) = derive.derive_equations_of_motion()
 
-pydy_rhs = generate_ode_function(kane.mass_matrix_full, kane.forcing_full,
-                                 constants, coordinates, speeds,
-                                 specified=specified, generator='cython')
-
-coordinate_values = np.random.random(9)
-speed_values = np.random.random(9)
-specified_values = np.random.random(9)
+pydy_rhs = generate_ode_function(mass_matrix, forcing_vector, constants,
+                                 coordinates, speeds, specified=specified,
+                                 generator='cython')
 
 coordinate_values = np.random.random(9)
 speed_values = np.random.random(9)
