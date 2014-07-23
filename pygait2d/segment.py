@@ -9,8 +9,8 @@ from pydy.viz import VisualizationFrame, Cylinder, Sphere
 
 class BodySegment(object):
 
-    viz_sphere_radius = 0.07
-    viz_cylinder_radius = 0.035
+    viz_sphere_radius = 0.07  # meters
+    viz_cylinder_radius = 0.035  # meters
 
     def __init__(self, label, description, parent_reference_frame,
                  origin_joint, joint_description, inertial_frame):
