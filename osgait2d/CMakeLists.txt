@@ -1,4 +1,4 @@
-project(DynamicWalker)
+project(Gait2D)
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -11,14 +11,14 @@ SET(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Release"
       else will be ignored." FORCE )
 
 SET(CMAKE_CXX_FLAGS "-std=c++11")
-SET(KIT DynamicWalker)
-SET(UKIT DYNAMICWALKER)
+SET(KIT Gait2D)
+SET(UKIT GAIT2D)
 
-set(DYNAMICWALKER_BUILD_DOC FALSE CACHE BOOL
+set(GAIT2D_BUILD_DOC FALSE CACHE BOOL
     "Create API documentation (requires Doxygen).")
 
 # Doxygen API documentation
-if(DYNAMICWALKER_BUILD_DOC)
+if(GAIT2D_BUILD_DOC)
     find_package(Doxygen REQUIRED)
     if(DOXYGEN_FOUND)
         configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile
@@ -29,10 +29,10 @@ if(DYNAMICWALKER_BUILD_DOC)
             COMMENT "Generating API documentation with Doxygen" VERBATIM)
         install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/html/ DESTINATION doc)
     endif(DOXYGEN_FOUND)
-endif(DYNAMICWALKER_BUILD_DOC)
+endif(GAIT2D_BUILD_DOC)
 
 INCLUDE_DIRECTORIES(${OPENSIMSIMBODY_INCLUDE_DIRS})
 
 MESSAGE("${OPENSIMBODY_LIBRARIES}")
-ADD_SUBDIRECTORY(DynamicWalker)
+ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(tests)
