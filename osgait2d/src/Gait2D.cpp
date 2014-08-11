@@ -427,7 +427,7 @@ int main()
 
         OpenSim::CoordinateSet &leftFootJoints = leftFootToShank->upd_CoordinateSet();
 
-        leftFootJoints[0].setName("qd");
+        leftFootJoints[0].setName("qg");
         double zRotRangeLeftFoot[2] = {-SimTK::convertDegreesToRadians(100.0), 0.0};
         leftFootJoints[0].setRange(zRotRangeLeftFoot);
         leftFootJoints[0].setDefaultValue(SimTK::convertDegreesToRadians(-30.0));
@@ -814,12 +814,56 @@ int main()
 
         */
 
-        /* Output */
+        /* Generalized Loads */
+        /* This adds joint torques for the ankle, knee, and hip. */
+
+        double maxTorque = 1000.0;
+
+        OpenSim::CoordinateActuator* rightHipTorque = new OpenSim::CoordinateActuator("qb");
+        rightHipTorque->setName("RightHipTorque");
+        rightHipTorque->setMinControl(-maxTorque);
+        rightHipTorque->setMaxControl(maxTorque);
+        osimModel.addForce(rightHipTorque);
+
+        OpenSim::CoordinateActuator* rightKneeTorque = new OpenSim::CoordinateActuator("qc");
+        rightKneeTorque->setName("RightKneeTorque");
+        rightKneeTorque->setMinControl(-maxTorque);
+        rightKneeTorque->setMaxControl(maxTorque);
+        osimModel.addForce(rightKneeTorque);
+
+        OpenSim::CoordinateActuator* rightAnkleTorque = new OpenSim::CoordinateActuator("qd");
+        rightAnkleTorque->setName("RightAnkleTorque");
+        rightAnkleTorque->setMinControl(-maxTorque);
+        rightAnkleTorque->setMaxControl(maxTorque);
+        osimModel.addForce(rightAnkleTorque);
+
+        OpenSim::CoordinateActuator* leftHipTorque = new OpenSim::CoordinateActuator("qe");
+        leftHipTorque->setName("LeftHipTorque");
+        leftHipTorque->setMinControl(-maxTorque);
+        leftHipTorque->setMaxControl(maxTorque);
+        osimModel.addForce(leftHipTorque);
+
+        OpenSim::CoordinateActuator* leftKneeTorque = new OpenSim::CoordinateActuator("qf");
+        leftKneeTorque->setName("LeftKneeTorque");
+        leftKneeTorque->setMinControl(-maxTorque);
+        leftKneeTorque->setMaxControl(maxTorque);
+        osimModel.addForce(leftKneeTorque);
+
+        OpenSim::CoordinateActuator* leftAnkleTorque = new OpenSim::CoordinateActuator("qg");
+        leftAnkleTorque->setName("LeftAnkleTorque");
+        leftAnkleTorque->setMinControl(-maxTorque);
+        leftAnkleTorque->setMaxControl(maxTorque);
+        osimModel.addForce(leftAnkleTorque);
+
+        /* Prescribed Motion for the ground */
+        /* I'm going to move the ground under the walker */
+        // SimTK::PrescribedMotion  this is a constraint
+
+        /* Serialize Model */
 
         osimModel.print("Gait2D.osim");
 
         /* Simulate */
-
 
 
         // Configure the model.
