@@ -820,37 +820,37 @@ int main()
         double maxTorque = 1000.0;
 
         OpenSim::CoordinateActuator* rightHipTorque = new OpenSim::CoordinateActuator("qb");
-        rightHipTorque->setName("RightHipTorque");
+        rightHipTorque->setName("TB");
         rightHipTorque->setMinControl(-maxTorque);
         rightHipTorque->setMaxControl(maxTorque);
         osimModel.addForce(rightHipTorque);
 
         OpenSim::CoordinateActuator* rightKneeTorque = new OpenSim::CoordinateActuator("qc");
-        rightKneeTorque->setName("RightKneeTorque");
+        rightKneeTorque->setName("TC");
         rightKneeTorque->setMinControl(-maxTorque);
         rightKneeTorque->setMaxControl(maxTorque);
         osimModel.addForce(rightKneeTorque);
 
         OpenSim::CoordinateActuator* rightAnkleTorque = new OpenSim::CoordinateActuator("qd");
-        rightAnkleTorque->setName("RightAnkleTorque");
+        rightAnkleTorque->setName("TD");
         rightAnkleTorque->setMinControl(-maxTorque);
         rightAnkleTorque->setMaxControl(maxTorque);
         osimModel.addForce(rightAnkleTorque);
 
         OpenSim::CoordinateActuator* leftHipTorque = new OpenSim::CoordinateActuator("qe");
-        leftHipTorque->setName("LeftHipTorque");
+        leftHipTorque->setName("TE");
         leftHipTorque->setMinControl(-maxTorque);
         leftHipTorque->setMaxControl(maxTorque);
         osimModel.addForce(leftHipTorque);
 
         OpenSim::CoordinateActuator* leftKneeTorque = new OpenSim::CoordinateActuator("qf");
-        leftKneeTorque->setName("LeftKneeTorque");
+        leftKneeTorque->setName("TF");
         leftKneeTorque->setMinControl(-maxTorque);
         leftKneeTorque->setMaxControl(maxTorque);
         osimModel.addForce(leftKneeTorque);
 
         OpenSim::CoordinateActuator* leftAnkleTorque = new OpenSim::CoordinateActuator("qg");
-        leftAnkleTorque->setName("LeftAnkleTorque");
+        leftAnkleTorque->setName("TG");
         leftAnkleTorque->setMinControl(-maxTorque);
         leftAnkleTorque->setMaxControl(maxTorque);
         osimModel.addForce(leftAnkleTorque);
