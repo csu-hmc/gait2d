@@ -1,41 +1,8 @@
-#include <OpenSim/OpenSim.h>
 #include <iostream>
 #include <vector>
-#include <utility>
 #include <stdexcept>
 
-// class GainScheduledController : public Controller {
-// OpenSim_DECLARE_CONCRETE_OBJECT(GainScheduledController, Controller);
-// 
-// public:
-    // GainSchedhuledController(std::Vector gainArray, std::Vector tStarArray, std::Vector heelStrikeTimeArray) : gainArray( gainArray ), tStarArray( tStarArray), heelStrikeTimeVec( heelStrikeTimeVec)
-    // {
-// 
-    // }
-// 
-// void computeControls( const SimTK::State& s, SimTK::Vector controls) const
-// {
-    // double t = s.getTime();
-// 
-    // double percentGait = computePercentGait(t);
-// 
-    // SimTK::Matrix gainMatrix 
-// 
-// }
-// 
-// void computePercentGait(double currentTime)
-// {
-// 
-// }
-// 
-// std::pair<SimTK::Matrix, SimTK::Matrix> interpolateArrays(double percentGait)
-// {
-// 
-// }
-// 
-// }
-//
-
+#include <OpenSim/OpenSim.h>
 
 double ComputePercentGait (const double current_time, const SimTK::Vector& heel_strike_times) {
     // Given a vector of monotonically increasing heel strike times and the
@@ -171,6 +138,101 @@ SimTK::Matrix InterpolateGainArray(const double percent_gait_cycle, const std::v
     return interpolated_gain_matrix;
 }
 
+class GainScheduledController : public OpenSim::Controller {
+OpenSim_DECLARE_CONCRETE_OBJECT(GainScheduledController, OpenSim::Controller);
+
+public:
+    // This controller needs three pieces of information on construction:
+    // gain_array : n vector of q x p matrices where each matrix is gain matrix
+    // corresponding to a percentage of the gait cycle
+    // t_star_array : n vector of q x 1 matrices where each matrix is T* vector
+    // corresponding to a percentage of the gait cycle
+    // heel strike time array : This is a list of times corresponding to heel
+    // strike (0% in the gait cycle)
+    // These should be set on construction and not modified.
+    GainScheduledController(SimTK::Vector heel_strike_times_input,
+                            std::vector<SimTK::Matrix> t_star_array_input,
+                            std::vector<SimTK::Matrix> gain_array_input)
+                            : OpenSim::Controller(),
+                            gain_array(gain_array_input),
+                            t_star_array(t_star_array_input),
+                            heel_strike_times(heel_strike_times_input)
+    {
+    }
+
+    void computeControls( const SimTK::State& s, SimTK::Vector& controls) const
+    {
+        double t = s.getTime();
+
+        // Pointers to the joint torque actuators
+
+        const OpenSim::CoordinateActuator* TB = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TB") );
+        const OpenSim::CoordinateActuator* TC = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TC") );
+        const OpenSim::CoordinateActuator* TD = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TD") );
+        const OpenSim::CoordinateActuator* TE = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TE") );
+        const OpenSim::CoordinateActuator* TF = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TF") );
+        const OpenSim::CoordinateActuator* TG = dynamic_cast<const OpenSim::CoordinateActuator*> ( &getActuatorSet().get("TG") );
+
+        const OpenSim::Coordinate* qb = TB->getCoordinate();
+        const OpenSim::Coordinate* qc = TC->getCoordinate();
+        const OpenSim::Coordinate* qd = TD->getCoordinate();
+        const OpenSim::Coordinate* qe = TE->getCoordinate();
+        const OpenSim::Coordinate* qf = TF->getCoordinate();
+        const OpenSim::Coordinate* qg = TG->getCoordinate();
+
+        // Build a sensor vector.
+        double qb_val = qb->getValue(s);
+        double qc_val = qc->getValue(s);
+        double qd_val = qd->getValue(s);
+        double qe_val = qe->getValue(s);
+        double qf_val = qf->getValue(s);
+        double qg_val = qg->getValue(s);
+        double ub_val = qb->getSpeedValue(s);
+        double uc_val = qc->getSpeedValue(s);
+        double ud_val = qd->getSpeedValue(s);
+        double ue_val = qe->getSpeedValue(s);
+        double uf_val = qf->getSpeedValue(s);
+        double ug_val = qg->getSpeedValue(s);
+
+        double s_array[12] = {qb_val, qc_val, qd_val, qe_val, qf_val, qg_val,
+                              ub_val, uc_val, ud_val, ue_val, uf_val, ug_val};
+
+        SimTK::Matrix x(12, 1, *s_array);
+
+        double percent_gait = ComputePercentGait(t, heel_strike_times);
+
+        // Returns a q x 1 SimTK::Matrix
+        SimTK::Matrix t_star = InterpolateGainArray(percent_gait, t_star_array);
+
+        // Returns a q x p SimTK::Matrix
+        SimTK::Matrix k = InterpolateGainArray(percent_gait, gain_array);
+
+        // Compute the control values using the control law.
+        SimTK::Matrix joint_torques = t_star + k * x;
+
+        // Apply the control values to the controller.
+        SimTK::Vector TB_vec(1, joint_torques(0, 0));
+        SimTK::Vector TC_vec(1, joint_torques(1, 0));
+        SimTK::Vector TD_vec(1, joint_torques(2, 0));
+        SimTK::Vector TE_vec(1, joint_torques(3, 0));
+        SimTK::Vector TF_vec(1, joint_torques(4, 0));
+        SimTK::Vector TG_vec(1, joint_torques(5, 0));
+
+        TB->addInControls(TB_vec, controls);
+        TC->addInControls(TC_vec, controls);
+        TD->addInControls(TD_vec, controls);
+        TE->addInControls(TE_vec, controls);
+        TF->addInControls(TF_vec, controls);
+        TG->addInControls(TG_vec, controls);
+    }
+
+private:
+
+    SimTK::Vector heel_strike_times;
+    std::vector<SimTK::Matrix> t_star_array;
+    std::vector<SimTK::Matrix> gain_array;
+};
+
 
 int main()
 {
@@ -183,11 +245,13 @@ int main()
     double col_stepper;
 
     for (SimTK::Matrix& gain_matrix_i : sample_gain_array) {
-        SimTK::Matrix gain_mat(2, 4);
+        int num_rows = 2;
+        int num_cols = 1;
+        SimTK::Matrix gain_mat(num_rows, num_cols);
         matrix_stepper += 1.0;
-        for (int row_idx=0; row_idx < 2; row_idx++){
+        for (int row_idx=0; row_idx < num_rows; row_idx++){
             row_stepper = row_idx;
-            for(int col_idx=0; col_idx < 4; col_idx++){
+            for(int col_idx=0; col_idx < num_cols; col_idx++){
                 col_stepper = col_idx;
                 gain_mat(row_idx, col_idx) = matrix_stepper + row_stepper + col_stepper;
             }
