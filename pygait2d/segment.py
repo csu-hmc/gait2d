@@ -2,9 +2,25 @@
 # -*- coding: utf-8 -*-
 
 # external libraries
-from sympy import symbols, exp, acos, pi
+from sympy import symbols, exp, acos, pi, Function
 import sympy.physics.mechanics as me
 from pydy.viz import VisualizationFrame, Cylinder, Sphere
+
+time_symbol = symbols('t', real=True)
+
+sym_kwargs = {'positive': True,
+              'real': True}
+
+
+def time_varying(sym_string):
+
+    funcs = symbols(sym_string, cls=Function, real=True)
+
+    try:
+        return tuple([f(time_symbol) for f in funcs])
+    except TypeError:
+        return funcs(time_symbol)
+
 
 
 class BodySegment(object):
@@ -61,15 +77,17 @@ class BodySegment(object):
 
         subscript = self.label.lower()
 
+        self.t = time_symbol
+
         # constants
-        self.g = symbols('g')
-        self.mass_symbol = symbols('m{}'.format(subscript))
+        self.g = symbols('g', **sym_kwargs)
+        self.mass_symbol = symbols('m{}'.format(subscript), **sym_kwargs)
         self.inertia_symbol = \
-            symbols('i{}'.format(subscript))
+            symbols('i{}'.format(subscript), **sym_kwargs)
         self.length_symbol = \
-            symbols('l{}'.format(subscript))
-        self.mass_center_x_symbol = symbols('x{}'.format(subscript))
-        self.mass_center_y_symbol = symbols('y{}'.format(subscript))
+            symbols('l{}'.format(subscript), **sym_kwargs)
+        self.mass_center_x_symbol = symbols('x{}'.format(subscript), real=True)
+        self.mass_center_y_symbol = symbols('y{}'.format(subscript), real=True)
 
         self.constants = [self.g,
                           self.mass_symbol,
@@ -80,12 +98,11 @@ class BodySegment(object):
 
         # functions of time
         self.generalized_coordinate_symbol = \
-            me.dynamicsymbols('q{}'.format(subscript))
+            time_varying('q{}'.format(subscript))
         self.generalized_coordinate_derivative_symbol = \
-            me.dynamicsymbols('q{}'.format(subscript), 1)
-        self.generalized_speed_symbol = \
-            me.dynamicsymbols('u{}'.format(subscript))
-        self.joint_torque_symbol = me.dynamicsymbols('T{}'.format(subscript))
+            self.generalized_coordinate_symbol.diff(self.t)
+        self.generalized_speed_symbol = time_varying('u{}'.format(subscript))
+        self.joint_torque_symbol = time_varying('T{}'.format(subscript))
 
     def _kinematic_differential_equations(self):
         """Creates a list of the kinematic differential equations. This is
@@ -192,13 +209,13 @@ class TrunkSegment(BodySegment):
     def _create_symbols(self):
         super(TrunkSegment, self)._create_symbols()
         # TODO : Format these with the subscript instead of a directly.
-        self.qa = me.dynamicsymbols('qax, qay')
-        self.ua = me.dynamicsymbols('uax, uay')
+        self.qa = time_varying('qax, qay')
+        self.ua = time_varying('uax, uay')
         self.constants.remove(self.length_symbol)
         del self.length_symbol
 
     def _trunk_extra_kinematic_equations(self):
-        qaxd, qayd = me.dynamicsymbols('qax, qay', 1)
+        qaxd, qayd = [f.diff(self.t) for f in self.qa]
         self.kinematic_equations += [self.ua[0] - qaxd, self.ua[1] - qayd]
 
     def _locate_joint(self):
@@ -267,9 +284,12 @@ class FootSegment(BodySegment):
 
     def _create_symbols(self):
         super(FootSegment, self)._create_symbols()
-        self.heel_distance = symbols('hx{}'.format(self.label.lower()))
-        self.toe_distance = symbols('tx{}'.format(self.label.lower()))
-        self.foot_depth = symbols('fy{}'.format(self.label.lower()))
+        self.heel_distance = symbols('hx{}'.format(self.label.lower()),
+                                     real=True)
+        self.toe_distance = symbols('tx{}'.format(self.label.lower()),
+                                    real=True)
+        self.foot_depth = symbols('fy{}'.format(self.label.lower()),
+                                  real=True)
 
         self.constants.remove(self.length_symbol)
         del self.length_symbol
@@ -419,8 +439,9 @@ def contact_force(point, ground, origin):
     # cubic stiffness and creates a light attractive force torwards the
     # ground. This is in place to ensure that gradients can be computed for
     # the optimization used in Ackermann and van den Bogert 2010.
-    contact_stiffness, contact_damping = symbols('kc, cc')
-    contact_friction_coefficient, friction_scaling_factor = symbols('mu, vs')
+    contact_stiffness, contact_damping = symbols('kc, cc', **sym_kwargs)
+    contact_friction_coefficient, friction_scaling_factor = \
+        symbols('mu, vs', **sym_kwargs)
 
     vertical_force = (contact_stiffness * penetration ** 3 - y_location) * \
         (1 - contact_damping * velocity.dot(ground.y))

@@ -16,8 +16,7 @@ from pygait2d import derive, simulate
  specified, visualization_frames, ground, origin) = derive.derive_equations_of_motion()
 
 pydy_rhs = generate_ode_function(mass_matrix, forcing_vector, constants,
-                                 coordinates, speeds, specified=specified,
-                                 generator='cython')
+                                 coordinates, speeds, specified=specified)
 
 coordinate_values = np.random.random(9)
 speed_values = np.random.random(9)
