@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-from pygait2d import __version__
+exec(open('pygait2d/version.py').read())
 
 description = \
     """An implementation of a planar human gait model."""
