@@ -7,34 +7,43 @@ import yaml
 import numpy as np
 from numpy import testing
 from pydy.codegen.code import generate_ode_function
+from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
 
 # local imports
-from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
-from pygait2d import derive, simulate
+from .. import derive, simulate
 
-(mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
- specified, visualization_frames, ground, origin) = derive.derive_equations_of_motion()
 
-pydy_rhs = generate_ode_function(mass_matrix, forcing_vector, constants,
-                                 coordinates, speeds, specified=specified)
+def test_accelerations():
+    import sympy
+    print(sympy.__version__)
+    print(sympy.__file__)
+    (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
+     specified, visualization_frames, ground, origin) = \
+        derive.derive_equations_of_motion()
 
-coordinate_values = np.random.random(9)
-speed_values = np.random.random(9)
-specified_values = np.random.random(9)
+    pydy_rhs = generate_ode_function(mass_matrix, forcing_vector, constants,
+                                     coordinates, speeds,
+                                     specified=specified)
 
-constant_values = simulate.load_constants('data/example_constants.yml')
-args = {'constants': np.array([constant_values[c] for c in constants]),
-        'specified': specified_values}
+    coordinate_values = np.random.random(9)
+    speed_values = np.random.random(9)
+    specified_values = np.random.random(9)
 
-pydy_xdot = pydy_rhs(np.hstack((coordinate_values, speed_values)), 0.0, args)
+    constant_map = simulate.load_constants(constants,
+                                           'data/example_constants.yml')
+    args = {'constants': np.array(constant_map.values()),
+            'specified': specified_values}
 
-with open('data/example_constants.yml', 'r') as f:
-    constants_dict = yaml.load(f)
+    x = np.hstack((coordinate_values, speed_values))
+    pydy_xdot = pydy_rhs(x, 0.0, args)
 
-constants_dict = simulate.map_values_to_autolev_symbols(constants_dict)
+    with open('data/example_constants.yml', 'r') as f:
+        constants_dict = yaml.load(f)
 
-accelerations, grfs, animation_data = \
-    autolev_rhs(coordinate_values, speed_values, specified_values,
-                constants_dict)
+    constants_dict = simulate.map_values_to_autolev_symbols(constants_dict)
 
-testing.assert_allclose(pydy_xdot[9:], accelerations)
+    accelerations, grfs, animation_data = \
+        autolev_rhs(coordinate_values, speed_values, specified_values,
+                    constants_dict)
+
+    testing.assert_allclose(pydy_xdot[9:], accelerations)

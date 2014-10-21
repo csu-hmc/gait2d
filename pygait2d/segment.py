@@ -7,20 +7,26 @@ import sympy.physics.mechanics as me
 from pydy.viz import VisualizationFrame, Cylinder, Sphere
 
 time_symbol = symbols('t', real=True)
+me.dynamicsymbols._t = time_symbol
 
+# Most of the Symbols are positive and real.
 sym_kwargs = {'positive': True,
               'real': True}
 
 
 def time_varying(sym_string):
+    """Retuns functions of time given a standard string for
+    sympy.symbols()."""
 
-    funcs = symbols(sym_string, cls=Function, real=True)
+    # TODO : Would it be better if these functions had the real=True
+    # assumption?
+
+    funcs = symbols(sym_string, cls=Function)
 
     try:
         return tuple([f(time_symbol) for f in funcs])
     except TypeError:
         return funcs(time_symbol)
-
 
 
 class BodySegment(object):

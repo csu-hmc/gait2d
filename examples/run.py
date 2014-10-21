@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """This example simply simulates and visualizes the uncontrolled motion and
 the model "falls down"."""
 
@@ -15,9 +18,10 @@ rhs = generate_ode_function(mass_matrix, forcing_vector,
                             constants, coordinates, speeds,
                             specified=specified, generator='cython')
 
-constant_values = simulate.load_constants('data/example_constants.yml')
+constant_values = simulate.load_constants(constants,
+                                          'data/example_constants.yml')
 
-args = {'constants': np.array([constant_values[c] for c in constants]),
+args = {'constants': np.array(constant_values.values()),
         'specified': np.zeros(9)}
 
 time_vector = np.linspace(0.0, 10.0, num=1000)

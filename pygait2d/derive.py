@@ -2,34 +2,14 @@
 # -*- coding: utf-8 -*-
 
 # external libraries
-from sympy import symbols, srepr, sympify, Matrix
+import sympy as sy
 import sympy.physics.mechanics as me
 
 # internal libraries
-from segment import BodySegment, TrunkSegment, FootSegment, contact_force
+from segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
+                     time_varying, time_symbol)
 
-
-def save_sympy_matrix(matrix, filename):
-    """Writes the matrix to file in the SymPy representation."""
-    num_rows, num_cols = matrix.shape
-    with open(filename, 'w') as f:
-        f.write(str(num_rows) + "\n")
-        f.write(str(num_cols) + "\n")
-        for expr in matrix:
-            f.write(srepr(expr) + "\n")
-
-
-def load_sympy_matrix(filename):
-    exprs = []
-    with open(filename, 'r') as f:
-        for i, line in enumerate(f):
-            if i == 0:
-                num_rows = int(line.strip())
-            elif i == 1:
-                num_cols = int(line.strip())
-            else:
-                exprs.append(sympify(line.strip()))
-    return Matrix(exprs).reshape(num_rows, num_cols)
+me.dynamicsymbols._t = time_symbol
 
 
 def derive_equations_of_motion(trig_simp=False):
@@ -43,7 +23,7 @@ def derive_equations_of_motion(trig_simp=False):
         sympy.trigsimp() will be applied to each expression in the mass
         matrix and forcing vector. This will slow the derivation down but
         give smaller expressions. TODO: May be smarter to do this on each
-        component that buils the EoMs instead of at the end.
+        component that builds the EoMs instead of at the end.
 
 
     Returns
@@ -154,33 +134,23 @@ def derive_equations_of_motion(trig_simp=False):
                                     contact_force(segments[0].mass_center,
                                                   ground, origin)))
     # add hand of god
-    trunk_force_x, trunk_force_y = me.dynamicsymbols('Fax, Fay')
+    # TODO : move this into segment.py
+    trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
     specified = [trunk_force_x, trunk_force_y] + specified
     external_forces_torques.append((segments[0].mass_center, trunk_force_x *
                                     ground.x + trunk_force_y * ground.y))
 
     # add contact model constants
-    constants += list(symbols('kc, cc, mu, vs'))
+    # TODO : these should be grabbed from the segments, not recreated.
+    constants += list(sy.symbols('kc, cc, mu, vs', real=True, positive=True))
 
     # equations of motion
     print("Initializing Kane's Method.")
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
-    try:
-        f1 = open('mass_matrix.txt', 'r')
-        f2 = open('forcing_matrix.txt', 'r')
-    except IOError:
-        print("Forming Kane's Equations.")
-        kane.kanes_equations(external_forces_torques, bodies)
-        save_sympy_matrix(kane.mass_matrix_full, 'mass_matrix.txt')
-        save_sympy_matrix(kane.forcing_full, 'forcing_matrix.txt')
-        mass_matrix = kane.mass_matrix_full
-        forcing_vector = kane.forcing_full
-    else:
-        print('Loading mass matrix and forcing vector from file.')
-        f1.close()
-        f2.close()
-        mass_matrix = load_sympy_matrix('mass_matrix.txt')
-        forcing_vector = load_sympy_matrix('forcing_matrix.txt')
+    print("Forming Kane's Equations.")
+    kane.kanes_equations(external_forces_torques, bodies)
+    mass_matrix = kane.mass_matrix_full
+    forcing_vector = kane.forcing_full
 
     if trig_simp is True:
         # If trig_simp is used, which takes a long time, it would be nice to
@@ -191,7 +161,7 @@ def derive_equations_of_motion(trig_simp=False):
         # TODO : Maybe I should enable Vector.simp == True so this happens
         # as things go along instead of all at the end.
         # TODO : Simplifying the mass matrix doesn't take too long, but the
-        # forcing vecto takes really long.
+        # forcing vector takes really long.
         for i, expression in enumerate(kane.mass_matrix_full):
             print("Simplifying matrix expression {}".format(i))
             kane.mass_matrix_full[i] = expression.trigsimp()
@@ -200,18 +170,5 @@ def derive_equations_of_motion(trig_simp=False):
             print("Simplifying forcing expression {}".format(i))
             kane.forcing_full[i] = expression.trigsimp()
 
-    return (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
-            specified, visualization_frames, ground, origin)
-
-
-def analytic_solve(kane):
-    """Computes the right hand side of the second order ODE's
-    symbolically."""
-    rhs = kane.mass_matrix.cholesky_solve(kane.forcing)
-    return rhs
-
-
-def compute_jacobians(fr_plus_frstar, coordinates, speeds):
-
-    fr_plus_frstar.jacobian(coordinates)
-    fr_plus_frstar.jacobian(speeds)
+    return (mass_matrix, forcing_vector, kane, constants, coordinates,
+            speeds, specified, visualization_frames, ground, origin)
