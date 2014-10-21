@@ -14,9 +14,6 @@ from .. import derive, simulate
 
 
 def test_accelerations():
-    import sympy
-    print(sympy.__version__)
-    print(sympy.__file__)
     (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
      specified, visualization_frames, ground, origin) = \
         derive.derive_equations_of_motion()
