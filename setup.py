@@ -36,18 +36,18 @@ setup(
     ],
     extras_require={
         'examples': ['numpy', 'scipy', 'cython'],
-        'tests': ['numpy', 'cython'],
         'doc': ['sphinx>=1.1.0', 'numpydoc>=0.4'],
     },
-    tests_require=['nose>1.3.0'],
-    test_suite='nose.collector',
+    tests_require=['pytest'],
     ext_modules=cythonize([extension]),
     long_description=open('README.rst').read(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Physics',
     ],
 )
