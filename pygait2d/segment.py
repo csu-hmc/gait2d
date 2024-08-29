@@ -187,6 +187,7 @@ class BodySegment(object):
         viz_frames = []
 
         cylinder = Cylinder(color='red',
+                            name=self.label,
                             length=self.length_symbol,
                             radius=self.viz_cylinder_radius)
 
@@ -202,6 +203,7 @@ class BodySegment(object):
                                              self.reference_frame,
                                              self.origin_joint,
                                              Sphere(color='blue',
+                                                    name=self.label + '_joint',
                                                     radius=self.viz_sphere_radius)))
 
         return viz_frames
@@ -257,7 +259,8 @@ class TrunkSegment(BodySegment):
 
         hip_to_mc_vector = self.mass_center.pos_from(self.joint)
 
-        cylinder = Cylinder(color='red', length=hip_to_mc_vector.magnitude(),
+        cylinder = Cylinder(color='red', name=self.label,
+                            length=hip_to_mc_vector.magnitude(),
                             radius=self.viz_cylinder_radius)
 
         center_point = \
@@ -273,6 +276,7 @@ class TrunkSegment(BodySegment):
                                              self.reference_frame,
                                              self.mass_center,
                                              Sphere(color='blue',
+                                                    name=self.label + '_joint',
                                                     radius=self.viz_sphere_radius)))
 
         return viz_frames
@@ -340,6 +344,7 @@ class FootSegment(BodySegment):
 
         heel_to_toe_length = self.toe.pos_from(self.heel).magnitude()
         bottom_cylinder = Cylinder(color='red',
+                                   name=self.label + 'bottom',
                                    length=heel_to_toe_length,
                                    radius=self.viz_cylinder_radius)
         bottom_center_point = self.heel.locatenew('BottomCenter',
@@ -358,6 +363,7 @@ class FootSegment(BodySegment):
         # top of foot
         ankle_to_toe_vector = self.toe.pos_from(self.origin_joint)
         top_cylinder = Cylinder(color='red',
+                                name=self.label + 'top',
                                 length=ankle_to_toe_vector.magnitude(),
                                 radius=self.viz_cylinder_radius)
         angle = -acos(ankle_to_toe_vector.normalize().dot(bottom_rf.y))
@@ -374,6 +380,7 @@ class FootSegment(BodySegment):
         # back of foot
         heel_to_ankle_vector = self.origin_joint.pos_from(self.heel)
         back_cylinder = Cylinder(color='red',
+                                 name=self.label + 'back',
                                  length=heel_to_ankle_vector.magnitude(),
                                  radius=self.viz_cylinder_radius)
         angle = acos(heel_to_ankle_vector.normalize().dot(bottom_rf.y))
@@ -392,14 +399,17 @@ class FootSegment(BodySegment):
                                              self.reference_frame,
                                              self.origin_joint,
                                              Sphere(color='blue',
+                                                    name=self.label + '_ankle',
                                                     radius=self.viz_sphere_radius)))
         viz_frames.append(VisualizationFrame('ToeVizFrame',
                                              self.reference_frame, self.toe,
                                              Sphere(color='blue',
+                                                    name=self.label + '_toe',
                                                     radius=self.viz_sphere_radius)))
         viz_frames.append(VisualizationFrame('HeelVizFrame',
                                              self.reference_frame, self.heel,
                                              Sphere(color='blue',
+                                                    name=self.label + '_heel',
                                                     radius=self.viz_sphere_radius)))
 
         return viz_frames
