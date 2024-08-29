@@ -6,8 +6,8 @@ import sympy as sy
 import sympy.physics.mechanics as me
 
 # internal libraries
-from segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
-                     time_varying, time_symbol)
+from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
+                      time_varying, time_symbol)
 
 me.dynamicsymbols._t = time_symbol
 
@@ -148,7 +148,7 @@ def derive_equations_of_motion(trig_simp=False):
     print("Initializing Kane's Method.")
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
     print("Forming Kane's Equations.")
-    kane.kanes_equations(external_forces_torques, bodies)
+    kane.kanes_equations(bodies, loads=external_forces_torques)
     mass_matrix = kane.mass_matrix_full
     forcing_vector = kane.forcing_full
 

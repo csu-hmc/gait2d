@@ -6,7 +6,7 @@ model."""
 import yaml
 import numpy as np
 from numpy import testing
-from pydy.codegen.code import generate_ode_function
+from pydy.codegen.ode_function_generators import generate_ode_function
 from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
 
 # local imports

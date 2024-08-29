@@ -11,7 +11,7 @@ def load_constants(constants, path):
     symbols to floats."""
 
     with open(path, 'r') as f:
-        constant_values_dict = yaml.load(f)
+        constant_values_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
     res = OrderedDict()
 
