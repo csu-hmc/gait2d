@@ -7,6 +7,7 @@ the model "falls down"."""
 import os
 
 import numpy as np
+import sympy as sm
 from scipy.integrate import odeint
 from pydy.codegen.ode_function_generators import generate_ode_function
 from pydy.viz import Scene
@@ -16,22 +17,24 @@ from pygait2d import derive, simulate
 (mass_matrix, forcing_vector, kane, constants, coordinates, speeds, specified,
  visualization_frames, ground, origin) = derive.derive_equations_of_motion()
 
+sym_kin_rhs = sm.Matrix(list(kane.kindiffdict().values()))
+sym_dyn_rhs = kane.mass_matrix.cramer_solve(kane.forcing)
+sym_rhs = sym_kin_rhs.col_join(sym_dyn_rhs)
+
 constant_values = simulate.load_constants(
     constants, os.path.join(os.path.dirname(__file__), '..',
                             'data/example_constants.yml'))
 
 rhs = generate_ode_function(
-    forcing_vector,
+    sym_rhs,
     coordinates,
     speeds,
     constants=list(constant_values.keys()),
-    mass_matrix=mass_matrix,
     specifieds=specified,
     generator='cython',
     constants_arg_type='array',
     specifieds_arg_type='array',
 )
-
 
 args = (np.zeros(len(specified)), np.array(list(constant_values.values())))
 
