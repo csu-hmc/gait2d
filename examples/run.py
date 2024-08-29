@@ -7,6 +7,7 @@ the model "falls down"."""
 import os
 
 import numpy as np
+import sympy as sm
 from scipy.integrate import odeint
 from pydy.codegen.ode_function_generators import generate_ode_function
 from pydy.viz import Scene
@@ -21,17 +22,17 @@ constant_values = simulate.load_constants(
                             'data/example_constants.yml'))
 
 rhs = generate_ode_function(
-    forcing_vector,
+    kane.forcing,
     coordinates,
     speeds,
     constants=list(constant_values.keys()),
-    mass_matrix=mass_matrix,
+    mass_matrix=kane.mass_matrix,
+    coordinate_derivatives=sm.Matrix(list(kane.kindiffdict().values())),
     specifieds=specified,
     generator='cython',
     constants_arg_type='array',
     specifieds_arg_type='array',
 )
-
 
 args = (np.zeros(len(specified)), np.array(list(constant_values.values())))
 
