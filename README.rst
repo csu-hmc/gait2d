@@ -18,8 +18,8 @@ Herr (2010).
 Speed
 =====
 
-The cythonized Autolev C code takes about 30 micro seconds per rhs eval and the
-pydy cython version takes about 70 microseconds (the slow part is, of course,
+The cythonized Autolev C code takes about 5 micro seconds per rhs eval and the
+pydy cython version takes about 15 microseconds (the slow part is, of course,
 the Python level solve on the full mass matrix).
 
 Usage
@@ -28,7 +28,7 @@ Usage
 pygait2d
 --------
 
-See ``example/run.py``.
+See ``examples/run.py``.
 
 algait2de
 ---------
@@ -38,6 +38,7 @@ To manually build the Autolev model and make use of it in Python::
    $ cd algait2d
    $ al gait2de.al
    $ python autolevclean.py
+   $ cd ..
    $ python setup.py build_ext --inplace
    $ python
    >>> import gait2de
