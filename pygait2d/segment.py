@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # external libraries
-from sympy import symbols, exp, acos, pi, Function
+from sympy import symbols, exp, acos, pi, Function, Abs
 import sympy.physics.mechanics as me
 from pydy.viz import VisualizationFrame, Cylinder, Sphere
 
@@ -21,7 +21,7 @@ def time_varying(sym_string):
     # TODO : Would it be better if these functions had the real=True
     # assumption?
 
-    funcs = symbols(sym_string, cls=Function)
+    funcs = symbols(sym_string, cls=Function, real=True)
 
     try:
         return tuple([f(time_symbol) for f in funcs])
@@ -111,8 +111,8 @@ class BodySegment(object):
         self.joint_torque_symbol = time_varying('T{}'.format(subscript))
 
     def _kinematic_differential_equations(self):
-        """Creates a list of the kinematic differential equations. This is
-        the simple definition:
+        r"""Creates a list of the kinematic differential equations. This is the
+        simple definition:
 
         0 = \dot{q}_i - u_i
 
@@ -447,7 +447,7 @@ def contact_force(point, ground, origin):
     #               { abs(y_location) if y_location < 0
     #
 
-    penetration = (abs(y_location) - y_location) / 2
+    penetration = (Abs(y_location) - y_location) / 2
 
     velocity = point.vel(ground)
 
