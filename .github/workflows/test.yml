@@ -24,6 +24,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           environment-file: gait2d-dev.yml
+      - name: test installation
+        shell: bash -l {0}
+        run: |
+          conda info
+          python setup.py install
+          conda list
       - name: run tests
         shell: bash -l {0}
         run: |
@@ -32,9 +38,3 @@ jobs:
           python -c "import pygait2d"
           python -c "import algait2d"
           py.test pygait2d/
-      - name: test installation
-        shell: bash -l {0}
-        run: |
-          conda info
-          python setup.py install
-          conda list
