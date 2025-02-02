@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Gait2D is a dynamic model that contains the essential elements for simulating
+gait2D is a dynamic model that contains the essential elements for simulating
 human gait in the sagittal plane. The model has been used in earlier forms by
 Ackermann and van den Bogert (2010) [Ackermann2010]_ and by Gerritsen et al.
 (1998) [Gerritsen1998]_. The main features of the model are:
