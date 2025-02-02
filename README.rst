@@ -22,6 +22,18 @@ The cythonized Autolev C code takes about 5 micro seconds per rhs eval and the
 PyDy cython version takes about 15 microseconds (the slow part is, of course,
 the Python level solve on the full mass matrix).
 
+Install
+=======
+
+This package has not yet been released to PyPi, so install from the development
+source::
+
+   git clone https://github.com/csu-hmc/gait2d
+   cd gait2d
+   conda env create -f gait2d-dev.yml
+   conda activate gait2d-dev
+   python -m pip install --no-deps --no-build-isolation --editable .
+
 Usage
 =====
 
