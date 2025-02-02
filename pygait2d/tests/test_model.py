@@ -19,7 +19,8 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 
 def test_accelerations():
     (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
-     specified, visualization_frames, ground, origin) = derive.derive_equations_of_motion()
+     specified, visualization_frames, ground, origin, segments) = \
+        derive.derive_equations_of_motion()
 
     pydy_rhs = generate_ode_function(
         forcing_vector,

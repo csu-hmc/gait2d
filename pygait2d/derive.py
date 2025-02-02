@@ -27,7 +27,9 @@ def derive_equations_of_motion(trig_simp=False):
 
 
     Returns
-    ==========
+    =======
+    mass_matrix : Matrix
+    forcing_vector : Matrix
     kane : sympy.physics.mechanics.Kane
         A Kane object in which the EoMs have been derived.
     constants : list of sympy.core.symbol.Symbol
@@ -38,6 +40,10 @@ def derive_equations_of_motion(trig_simp=False):
         The generalized speeds of the system.
     specified : list of sympy.core.function.Function, optional, default=None
         The specifed quantities of the system.
+    visualization_frames : list of VizFrame
+    ground : ReferenceFrame
+    origin : Point
+    segments : list of Segment
 
     """
     if trig_simp is True:
@@ -170,5 +176,5 @@ def derive_equations_of_motion(trig_simp=False):
             print("Simplifying forcing expression {}".format(i))
             kane.forcing_full[i] = expression.trigsimp()
 
-    return (mass_matrix, forcing_vector, kane, constants, coordinates,
-            speeds, specified, visualization_frames, ground, origin)
+    return (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
+            specified, visualization_frames, ground, origin, segments)
