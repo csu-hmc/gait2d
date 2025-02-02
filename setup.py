@@ -21,7 +21,7 @@ extension = Extension(
 description = "An implementation of a planar human gait model."
 
 setup(
-    name='Gait2D',
+    name='gait2d',
     author='Jason K. Moore',
     author_email='moorepants@gmail.com',
     version=__version__,
@@ -30,13 +30,13 @@ setup(
     license='LICENSE.txt',
     packages=find_packages(),
     install_requires=[
-        'sympy',
         'pydy',
         'pyyaml',
+        'sympy',
     ],
     extras_require={
         'examples': ['numpy', 'scipy', 'cython'],
-        'doc': ['sphinx>=1.1.0', 'numpydoc>=0.4'],
+        'doc': ['sphinx', 'numpydoc'],
     },
     tests_require=['pytest'],
     ext_modules=cythonize([extension]),
@@ -48,6 +48,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Scientific/Engineering :: Physics',
     ],
 )
