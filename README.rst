@@ -1,7 +1,7 @@
 Introduction
 ============
 
-gait2D is a dynamic model that contains the essential elements for simulating
+gait2d is a dynamic model that contains the essential elements for simulating
 human gait in the sagittal plane. The model has been used in earlier forms by
 Ackermann and van den Bogert (2010) [Ackermann2010]_ and by Gerritsen et al.
 (1998) [Gerritsen1998]_. The main features of the model are:
@@ -19,8 +19,9 @@ Speed
 =====
 
 The cythonized Autolev C code takes about 5 micro seconds per rhs eval and the
-PyDy cython version takes about 15 microseconds (the slow part is, of course,
-the Python level solve on the full mass matrix).
+PyDy Cython version takes about 15 microseconds (the PyDy version is slower
+because of the Python level linear solve on the full mass matrix, but only for
+forward dynamics).
 
 Install
 =======
@@ -53,7 +54,7 @@ To manually build the Autolev model and make use of it in Python::
    $ cd ..
    $ python setup.py build_ext --inplace
    $ python
-   >>> import gait2de
+   >>> from algait2de import gait2de
    >>> gait2de.evaluate_autolev_rhs(...)
 
 Model Description
