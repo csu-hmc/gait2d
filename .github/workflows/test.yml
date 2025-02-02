@@ -24,17 +24,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           environment-file: gait2d-dev.yml
-      - name: test installation
+      - name: install and run tests
         shell: bash -l {0}
         run: |
           conda info
-          python setup.py install
+          python -m pip install --no-deps --no-build-isolation --editable .
           conda list
-      - name: run tests
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-          python -c "import pygait2d"
-          python -c "import algait2de"
-          py.test pygait2d/
+          python -c "import pygait2d.segment"
+          python -c "import algait2de.gait2de"
+          pytest pygait2d/
