@@ -65,69 +65,69 @@ Rigid bodies and constants
 
 - Right Thigh (B)
 
-   - ``mb``: mass [kg]
-   - ``ib``: moment of inertia about mass center wrt to right thigh reference
-     frame [kg*m^2]
-   - ``xb``: local x location of mass center wrt to the hip joint [m]
-   - ``yb``: local y location of mass center wrt to the hip joint [m]
-   - ``lb``: joint to joint segment length [m]
+  - ``mb``: mass [kg]
+  - ``ib``: moment of inertia about mass center wrt to right thigh reference
+    frame [kg*m^2]
+  - ``xb``: local x location of mass center wrt to the hip joint [m]
+  - ``yb``: local y location of mass center wrt to the hip joint [m]
+  - ``lb``: joint to joint segment length [m]
 
 - Right Shank (C)
 
-   - ``mc``: mass [kg]
-   - ``ic``: moment of inertia about mass center wrt to right shank reference
-     frame [kg*m^2]
-   - ``xc``: x location of mass center wrt to the knee joint [m]
-   - ``yc``: y location of mass center wrt to the knee joint [m]
-   - ``lc``: joint to joint segment length [m]
+  - ``mc``: mass [kg]
+  - ``ic``: moment of inertia about mass center wrt to right shank reference
+    frame [kg*m^2]
+  - ``xc``: x location of mass center wrt to the knee joint [m]
+  - ``yc``: y location of mass center wrt to the knee joint [m]
+  - ``lc``: joint to joint segment length [m]
 
 - Right Foot (D)
 
-   - ``md``: mass [kg]
-   - ``id``: moment of inertia about mass center wrt to right foot reference
-     frame [kg*m^2]
-   - ``xd``: local x location of mass center wrt to the ankle joint [m]
-   - ``yd``: local y location of mass center wrt to the ankle joint [m]
-   - ``hxd``: local x location of heel wrt to the ankle joint [m]
-   - ``txd``: local x location of toe wrt to the ankle joint [m]
-   - ``fyd``: local y location of heel and toe relative to ankle joint [m]
+  - ``md``: mass [kg]
+  - ``id``: moment of inertia about mass center wrt to right foot reference
+    frame [kg*m^2]
+  - ``xd``: local x location of mass center wrt to the ankle joint [m]
+  - ``yd``: local y location of mass center wrt to the ankle joint [m]
+  - ``hxd``: local x location of heel wrt to the ankle joint [m]
+  - ``txd``: local x location of toe wrt to the ankle joint [m]
+  - ``fyd``: local y location of heel and toe relative to ankle joint [m]
 
 - Left Thigh (E)
 
-   - ``me``: mass [kg]
-   - ``ie``: moment of inertia about mass center wrt to left thigh reference
-     frame [kg*m^2]
-   - ``xe``: local x location of mass center wrt to the hip joint [m]
-   - ``ye``: local y location of mass center wrt to the hip joint [m]
-   - ``le``: joint to joint segment length [m]
+  - ``me``: mass [kg]
+  - ``ie``: moment of inertia about mass center wrt to left thigh reference
+    frame [kg*m^2]
+  - ``xe``: local x location of mass center wrt to the hip joint [m]
+  - ``ye``: local y location of mass center wrt to the hip joint [m]
+  - ``le``: joint to joint segment length [m]
 
 - Left Shank (F)
 
-   - ``mf``: mass [kg]
-   - ``if``: moment of inertia about mass center wrt to left shank reference
-     frame [kg*m^2]
-   - ``xf``: x location of mass center wrt to the knee joint [m]
-   - ``yf``: y location of mass center wrt to the knee joint [m]
-   - ``lf``: joint to joint segment length [m]
+  - ``mf``: mass [kg]
+  - ``if``: moment of inertia about mass center wrt to left shank reference
+    frame [kg*m^2]
+  - ``xf``: x location of mass center wrt to the knee joint [m]
+  - ``yf``: y location of mass center wrt to the knee joint [m]
+  - ``lf``: joint to joint segment length [m]
 
 - Left Foot (G)
 
-   - ``mg``: mass [kg]
-   - ``ig``: moment of inertia about mass center wrt to left foot reference
-     frame [kg*m^2]
-   - ``xg``: local x location of mass center wrt to the ankle joint [m]
-   - ``yg``: local y location of mass center wrt to the ankle joint [m]
-   - ``hxg``: local x location of heel wrt to the ankle joint [m]
-   - ``txg``: local x location of toe wrt to the ankle joint [m]
-   - ``fyg``: local y location of heel and toe relative to ankle joint [m]
+  - ``mg``: mass [kg]
+  - ``ig``: moment of inertia about mass center wrt to left foot reference
+    frame [kg*m^2]
+  - ``xg``: local x location of mass center wrt to the ankle joint [m]
+  - ``yg``: local y location of mass center wrt to the ankle joint [m]
+  - ``hxg``: local x location of heel wrt to the ankle joint [m]
+  - ``txg``: local x location of toe wrt to the ankle joint [m]
+  - ``fyg``: local y location of heel and toe relative to ankle joint [m]
 
 - Other constants
 
-   - ``kc``: ground contact stiffness [N/m^3]
-   - ``cc``: ground contact damping [s/m]
-   - ``mu``: friction coefficient
-   - ``vs``: velocity constant [m/s]
-   - ``g``: acceleration due to gravity [m/s^2]
+  - ``kc``: ground contact stiffness [N/m^3]
+  - ``cc``: ground contact damping [s/m]
+  - ``mu``: friction coefficient
+  - ``vs``: velocity constant [m/s]
+  - ``g``: acceleration due to gravity [m/s^2]
 
 Generalized coordinates
 -----------------------
