@@ -10,7 +10,7 @@ from Cython.Build import cythonize
 exec(open('pygait2d/version.py').read())
 
 extension = Extension(
-    name="gait2de",
+    name="algait2de.gait2de",
     sources=[
         os.path.join("algait2de", "gait2de.pyx"),
         os.path.join("algait2de", "gait2de_al.c"),
