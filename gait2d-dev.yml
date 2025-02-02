@@ -2,14 +2,18 @@ name: gait2d-dev
 channels:
   - conda-forge
 dependencies:
+  # build
   - cython
-  - ipython
-  - jupyter
+  - setuptools
+  # run
   - numpy
   - pydy
-  - pytest
   - python
   - pyyaml
-  - scipy
-  - setuptools
   - sympy
+  # examples
+  - scipy
+  # dev
+  - ipython
+  - jupyter
+  - pytest
