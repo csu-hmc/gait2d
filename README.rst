@@ -15,6 +15,10 @@ control. The model is intended for education and basic research. The model can
 be used for studies such as Ackermann and van den Bogert (2010) and Geyer and
 Herr (2010) [Geyer2010]_.
 
+The included Autolev model was originally written by Ton van den Bogert and
+adapted by Jason K. Moore. The SymPy Mechanics model was created by Jason to
+match the Autolev model results for use with PyDy and opty.
+
 Speed
 =====
 
