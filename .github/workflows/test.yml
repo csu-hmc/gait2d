@@ -36,5 +36,5 @@ jobs:
           conda info
           conda list
           python -c "import pygait2d"
-          python -c "import algait2d"
+          python -c "import algait2de"
           py.test pygait2d/
