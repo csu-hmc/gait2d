@@ -12,7 +12,7 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
 me.dynamicsymbols._t = time_symbol
 
 
-def derive_equations_of_motion(trig_simp=False):
+def derive_equations_of_motion(trig_simp=False, seat_force=False):
     """Returns the equations of motion for the walking model along with all
     of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -24,7 +24,9 @@ def derive_equations_of_motion(trig_simp=False):
         matrix and forcing vector. This will slow the derivation down but
         give smaller expressions. TODO: May be smarter to do this on each
         component that builds the EoMs instead of at the end.
-
+    seat_force : boolean, optional, default=False
+        If true, a contact force will be added to the hip joint to represent a
+        surface higher than the ground to sit on.
 
     Returns
     =======
@@ -129,6 +131,13 @@ def derive_equations_of_motion(trig_simp=False):
             external_forces_torques.append((segment.joint,
                                             contact_force(segment.joint,
                                                           ground, origin)))
+
+        if seat_force and label == "A":
+            # TODO : Make seat height a variable.
+            seat_level = origin.locatenew('seat', 0.4*ground.y)
+            external_forces_torques.append((segment.joint,
+                                            contact_force(segment.joint,
+                                                          ground, seat_level)))
 
         # bodies
         bodies.append(segment.rigid_body)
