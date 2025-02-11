@@ -132,17 +132,19 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False):
                                             contact_force(segment.joint,
                                                           ground, origin)))
 
-        if seat_force and label == "A":
-            # TODO : Make seat height a variable.
-            seat_level = origin.locatenew('seat', 0.4*ground.y)
-            external_forces_torques.append((segment.joint,
-                                            contact_force(segment.joint,
-                                                          ground, seat_level)))
-
         # bodies
         bodies.append(segment.rigid_body)
 
         visualization_frames += segment.visualization_frames()
+
+    if seat_force:
+        # TODO : Make seat height a variable.
+        seat_level = segments[0].joint.locatenew(
+            'seat', (segments[2].length_symbol -
+                     segments[3].foot_depth)*ground.y)
+        external_forces_torques.append((segments[0].joint,
+                                        contact_force(segments[0].joint,
+                                                      ground, seat_level)))
 
     # add contact force for trunk mass center.
     external_forces_torques.append((segments[0].mass_center,
