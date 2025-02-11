@@ -138,8 +138,7 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False):
         visualization_frames += segment.visualization_frames()
 
     if seat_force:
-        # TODO : Make seat height a variable.
-        seat_level = segments[0].joint.locatenew(
+        seat_level = origin.locatenew(
             'seat', (segments[2].length_symbol -
                      segments[3].foot_depth)*ground.y)
         external_forces_torques.append((segments[0].joint,
