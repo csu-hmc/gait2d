@@ -34,9 +34,9 @@ def test_accelerations():
         specifieds_arg_type='array',
     )
 
-    coordinate_values = np.random.random(9)
-    speed_values = np.random.random(9)
-    specified_values = np.random.random(9)
+    coordinate_values = np.random.random(len(coordinates))
+    speed_values = np.random.random(len(speeds))
+    specified_values = np.random.random(len(specified))
 
     constant_map = simulate.load_constants(
         constants, os.path.join(ROOT, 'data/example_constants.yml'))
@@ -50,8 +50,41 @@ def test_accelerations():
 
     constants_dict = simulate.map_values_to_autolev_symbols(constants_dict)
 
-    accelerations, grfs, animation_data = \
-        autolev_rhs(coordinate_values, speed_values, specified_values,
-                    constants_dict)
+    accelerations, grfs, animation_data = autolev_rhs(coordinate_values,
+                                                      speed_values,
+                                                      specified_values,
+                                                      constants_dict)
 
     testing.assert_allclose(pydy_xdot[9:], accelerations)
+
+
+def test_with_control():
+    (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
+     specified, visualization_frames, ground, origin, segments) = \
+        derive.derive_equations_of_motion(gait_cycle_control=True)
+
+    pydy_rhs = generate_ode_function(
+        forcing_vector,
+        coordinates,
+        speeds,
+        constants=constants,
+        mass_matrix=mass_matrix,
+        specifieds=specified,
+        generator='cython',
+        constants_arg_type='array',
+        specifieds_arg_type='array',
+    )
+
+    coordinate_values = np.random.random(len(coordinates))
+    speed_values = np.random.random(len(speeds))
+    specified_values = np.random.random(len(specified))
+
+    constant_map = simulate.load_constants(
+        constants, os.path.join(ROOT, 'data/example_constants.yml'))
+    args = (specified_values, np.array(list(constant_map.values())))
+
+    x = np.hstack((coordinate_values, speed_values))
+    pydy_xdot = pydy_rhs(x, 0.0, *args)
+
+    assert isinstance(pydy_xdot, np.ndarray)
+    testing.assert_allclose(pydy_xdot[:9], speed_values)
