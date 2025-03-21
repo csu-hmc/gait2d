@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
-
 import yaml
 
 
@@ -13,7 +11,7 @@ def load_constants(constants, path):
     with open(path, 'r') as f:
         constant_values_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
-    res = OrderedDict()
+    res = {}
 
     for c in constants:
         res[c] = constant_values_dict[c.name]
