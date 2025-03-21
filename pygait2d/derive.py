@@ -12,19 +12,13 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
 me.dynamicsymbols._t = time_symbol
 
 
-def derive_equations_of_motion(trig_simp=False, seat_force=False,
-                               gait_cycle_control=False):
-    """Returns the equations of motion for the walking model along with all
-    of the constants, coordinates, speeds, joint torques, visualization
+def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
+    """Returns the equations of motion for the planar walking model along with
+    all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
 
     Parameters
     ==========
-    trig_simp : boolean, optional, default=False
-        sympy.trigsimp() will be applied to each expression in the mass
-        matrix and forcing vector. This will slow the derivation down but
-        give smaller expressions. TODO: May be smarter to do this on each
-        component that builds the EoMs instead of at the end.
     seat_force : boolean, optional, default=False
         If true, a contact force will be added to the hip joint to represent a
         surface higher than the ground to sit on.
@@ -34,26 +28,33 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
 
     Returns
     =======
-    mass_matrix : Matrix
-    forcing_vector : Matrix
+    mass_matrix : Matrix, shape(18, 18)
+        Full mass matrix of the system to be multiplied by ``x' =
+        [coordinates', speeds']``.
+    forcing_vector : Matrix, shape(18, 1)
+        Full forcing vector where: ``mass_matrix*x' = forcing vector``.
     kane : sympy.physics.mechanics.Kane
-        A Kane object in which the EoMs have been derived.
-    constants : list of sympy.core.symbol.Symbol
+        A KanesMethod object in which the equations of motion have been
+        derived. All symbolics are accessible from this object if needed.
+    constants : list of Symbol
         The constants in the equations of motion.
-    coordinates : list of sympy.core.function.Function
+    coordinates : list of Function(t)
         The generalized coordinates of the system.
-    speeds : list of sympy.core.function.Function
+    speeds : list of Function(t)
         The generalized speeds of the system.
-    specified : list of sympy.core.function.Function, optional, default=None
+    specified : list of Function(t), optional, default=None
         The specifed quantities of the system.
     visualization_frames : list of VizFrame
     ground : ReferenceFrame
+        An inertial reference frame representing the Earth and a the direction
+        of the uniform gravitational field.
     origin : Point
+        A point fixed in the ground reference frame used for calculating
+        translational velocities.
     segments : list of Segment
+        All of the segment objects that make up the human.
 
     """
-    if trig_simp is True:
-        me.Vector.simp = True
 
     print('Forming positions, velocities, accelerations and forces.')
     segment_descriptions = {'A': (TrunkSegment, 'Trunk', 'Hip'),
@@ -172,24 +173,6 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
     mass_matrix = kane.mass_matrix_full
     forcing_vector = kane.forcing_full
 
-    if trig_simp is True:
-        # If trig_simp is used, which takes a long time, it would be nice to
-        # pickle the results. Seems that the standard pickle module may have
-        # trouble with that, but the dill package can probably do it.
-        # https://pypi.python.org/pypi/dill
-        # TODO : This should be done in parallel.
-        # TODO : Maybe I should enable Vector.simp == True so this happens
-        # as things go along instead of all at the end.
-        # TODO : Simplifying the mass matrix doesn't take too long, but the
-        # forcing vector takes really long.
-        for i, expression in enumerate(kane.mass_matrix_full):
-            print("Simplifying matrix expression {}".format(i))
-            kane.mass_matrix_full[i] = expression.trigsimp()
-
-        for i, expression in enumerate(kane.forcing_full):
-            print("Simplifying forcing expression {}".format(i))
-            kane.forcing_full[i] = expression.trigsimp()
-
     if gait_cycle_control:
         # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
         # joint_state)
@@ -197,13 +180,17 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
         # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
         #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
         # commanded states
-        # xc = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t)]
-        #       uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
-        # controls
+        # xc = [qax_c(t), qay_c(t), qa_c(t), qb_c(t), qc_c(t), qd_c(t), qe_c(t), qf_c(t), qg_c(t)]
+        #       uax_c(t), uay_c(t), ua_c(t), ub_c(t), uc_c(t), ud_c(t), ue_c(t), uf_c(t), ug_c(t)]
+        # controlled joint torques
         # uc(t) = r(t) + K(t)*(xc(t) - x(t))
+        # r(t) : force or torque
+        # K(t) : time varying full state feedback gain matrix
+        # xc(t) : commanded (desired) states
+        # x(t) : states
         # K is, in general, 9 x 18
         # the first three rows and columns will be zero if hand of god is
-        # absent, which effectively makes it a 6x6
+        # absent, which effectively makes it a 6x18
         # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf, kax_qg,
         #      kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue, kax_uf, kax_ug|
         #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf, kay_qg|
@@ -226,9 +213,11 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
         for xi in coordinates + speeds:
             xc.append(sy.Function('{}_c'.format(xi.name),
                                   real=True)(time_symbol))
+        r = sy.Matrix(specified)
         xc = sy.Matrix(xc)
+        x = sy.Matrix(coordinates + speeds)
 
-        uc = (sy.Matrix(specified) + K@(xc - sy.Matrix(coordinates + speeds)))
+        uc = r + K@(xc - x)
 
         repl = {k: v for k, v in zip(specified, uc)}
 
