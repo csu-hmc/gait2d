@@ -28,6 +28,9 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
     seat_force : boolean, optional, default=False
         If true, a contact force will be added to the hip joint to represent a
         surface higher than the ground to sit on.
+    gait_cycle_control : boolean, optinal, default=False
+        If true, the specified forces and torques are replaced with a full
+        state feeback controller summed with the forces and torques.
 
     Returns
     =======
@@ -190,12 +193,14 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
     if gait_cycle_control:
         # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
         # joint_state)
-        # u = [Fax(t), Fay(t), Ta(t), Tb(t), Tc(t), Td(t), Te(t), Tf(t), Tg(t)]
+        # r = [Fax(t), Fay(t), Ta(t), Tb(t), Tc(t), Td(t), Te(t), Tf(t), Tg(t)]
         # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
         #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
-        # x_des = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t)]
-        #          uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
-        # uc = u + K*(x_dx - x)
+        # commanded states
+        # xc = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t)]
+        #       uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
+        # controls
+        # uc(t) = r(t) + K(t)*(xc(t) - x(t))
         # K is, in general, 9 x 18
         # the first three rows and columns will be zero if hand of god is
         # absent, which effectively makes it a 6x6
@@ -212,25 +217,25 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False,
         for ri in specified:
             row = []
             for xi in coordinates + speeds:
-                row.append(sy.Symbol('k_{}_{}'.format(ri.name, xi.name),
-                                     real=True))
+                row.append(sy.Function('k_{}_{}'.format(ri.name, xi.name),
+                                       real=True)(time_symbol))
             K.append(row)
         K = sy.Matrix(K)
 
-        x_des = []
+        xc = []
         for xi in coordinates + speeds:
-            x_des.append(sy.Symbol('{}_des'.format(xi.name), real=True))
-        x_des = sy.Matrix(x_des)
+            xc.append(sy.Function('{}_c'.format(xi.name),
+                                  real=True)(time_symbol))
+        xc = sy.Matrix(xc)
 
-        feedback_torques = (sy.Matrix(specified) +
-                            K @ (x_des - sy.Matrix(coordinates + speeds)))
+        uc = (sy.Matrix(specified) + K@(xc - sy.Matrix(coordinates + speeds)))
 
-        repl = {k: v for k, v in zip(specified, feedback_torques)}
+        repl = {k: v for k, v in zip(specified, uc)}
 
         forcing_vector = forcing_vector.xreplace(repl)
 
-        constants += K[:]
-        specified += x_des[:]
+        specified += K[:]
+        specified += xc[:]
 
     return (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
             specified, visualization_frames, ground, origin, segments)
