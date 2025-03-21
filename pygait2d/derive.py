@@ -12,7 +12,8 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
 me.dynamicsymbols._t = time_symbol
 
 
-def derive_equations_of_motion(trig_simp=False, seat_force=False):
+def derive_equations_of_motion(trig_simp=False, seat_force=False,
+                               gait_cycle_control=False):
     """Returns the equations of motion for the walking model along with all
     of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -185,6 +186,51 @@ def derive_equations_of_motion(trig_simp=False, seat_force=False):
         for i, expression in enumerate(kane.forcing_full):
             print("Simplifying forcing expression {}".format(i))
             kane.forcing_full[i] = expression.trigsimp()
+
+    if gait_cycle_control:
+        # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
+        # joint_state)
+        # u = [Fax(t), Fay(t), Ta(t), Tb(t), Tc(t), Td(t), Te(t), Tf(t), Tg(t)]
+        # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
+        #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
+        # x_des = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t)]
+        #          uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
+        # uc = u + K*(x_dx - x)
+        # K is, in general, 9 x 18
+        # the first three rows and columns will be zero if hand of god is
+        # absent, which effectively makes it a 6x6
+        # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf, kax_qg,
+        #      kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue, kax_uf, kax_ug|
+        #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf, kay_qg|
+        #     |ka_qax, ka_qay, ka_qa, ka_qb, ka_qc, ka_qd, ka_qe, ka_qf, ka_qg|
+        #     ...
+        #     |kg_qax, kg_qay, kg_qa, kg_qb, kg_qc, kg_qd, kg_qe, kg_qf, kg_qg|
+        # We can just go through the final equations of motion and replace the
+        # joint torques Tb through Tg with Tb -> Tb + kb_qb*(qb_des - qb) +
+        # kb_ub*(ub_des - qb) + ...
+        K = []
+        for ri in specified:
+            row = []
+            for xi in coordinates + speeds:
+                row.append(sy.Symbol('k_{}_{}'.format(ri.name, xi.name),
+                                     real=True))
+            K.append(row)
+        K = sy.Matrix(K)
+
+        x_des = []
+        for xi in coordinates + speeds:
+            x_des.append(sy.Symbol('{}_des'.format(xi.name), real=True))
+        x_des = sy.Matrix(x_des)
+
+        feedback_torques = (sy.Matrix(specified) +
+                            K @ (x_des - sy.Matrix(coordinates + speeds)))
+
+        repl = {k: v for k, v in zip(specified, feedback_torques)}
+
+        forcing_vector = forcing_vector.xreplace(repl)
+
+        constants += K[:]
+        specified += x_des[:]
 
     return (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
             specified, visualization_frames, ground, origin, segments)
