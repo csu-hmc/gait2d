@@ -12,7 +12,8 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
 me.dynamicsymbols._t = time_symbol
 
 
-def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
+def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
+                               ground_force_on_all_joints=True):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -133,9 +134,10 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
                                             contact_force(segment.toe,
                                                           ground, origin)))
         else:
-            external_forces_torques.append((segment.joint,
-                                            contact_force(segment.joint,
-                                                          ground, origin)))
+            if ground_force_on_all_joints:
+                external_forces_torques.append((segment.joint,
+                                                contact_force(segment.joint,
+                                                              ground, origin)))
 
         # bodies
         bodies.append(segment.rigid_body)
@@ -150,10 +152,11 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
                                         contact_force(segments[0].joint,
                                                       ground, seat_level)))
 
-    # add contact force for trunk mass center.
-    external_forces_torques.append((segments[0].mass_center,
-                                    contact_force(segments[0].mass_center,
-                                                  ground, origin)))
+    if ground_force_on_all_joints:
+        # add contact force for trunk mass center.
+        external_forces_torques.append((segments[0].mass_center,
+                                        contact_force(segments[0].mass_center,
+                                                      ground, origin)))
     # add hand of god
     # TODO : move this into segment.py
     trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
