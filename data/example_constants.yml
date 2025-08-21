@@ -56,3 +56,140 @@ mu: 1.0  # friction coefficient
 vs: 0.01 # velocity constant (m/s), for |ve| : vc -> |fx| : 0.4621*c*fy
 # other
 g: 9.81 # acceleration due to gravity, m/s^2
+# muscles
+# muscle properties derived from Table 1 in: Gerritsen, K. G. M., Bogert, A. J. van den,
+# Hulliger, M., & Zernicke, R. F. (1998). Intrinsic Muscle Properties
+# Facilitate Locomotor Control—A Computer Simulation Study. Motor Control,
+# 2(3), 206–220. https://doi.org/10.1123/mcj.2.3.206
+F_M_max_gast_l: 1639.0
+F_M_max_gast_r: 1639.0
+F_M_max_glut_l: 1705.0
+F_M_max_glut_r: 1705.0
+F_M_max_hams_l: 1770.0
+F_M_max_hams_r: 1770.0
+F_M_max_ilio_l: 821.0
+F_M_max_ilio_r: 821.0
+F_M_max_rect_l: 663.0
+F_M_max_rect_r: 663.0
+F_M_max_sole_l: 3883.0
+F_M_max_sole_r: 3883.0
+F_M_max_tibi_l: 1528.0
+F_M_max_tibi_r: 1528.0
+F_M_max_vast_l: 7403.0
+F_M_max_vast_r: 7403.0
+l_M_opt_gast_l: 0.055
+l_M_opt_gast_r: 0.055
+l_M_opt_glut_l: 0.200
+l_M_opt_glut_r: 0.200
+l_M_opt_hams_l: 0.104
+l_M_opt_hams_r: 0.104
+l_M_opt_ilio_l: 0.102
+l_M_opt_ilio_r: 0.102
+l_M_opt_rect_l: 0.081
+l_M_opt_rect_r: 0.081
+l_M_opt_sole_l: 0.055
+l_M_opt_sole_r: 0.055
+l_M_opt_tibi_l: 0.082
+l_M_opt_tibi_r: 0.082
+l_M_opt_vast_l: 0.093
+l_M_opt_vast_r: 0.093
+l_T_slack_gast_l: 0.420
+l_T_slack_gast_r: 0.420
+l_T_slack_glut_l: 0.157
+l_T_slack_glut_r: 0.157
+l_T_slack_hams_l: 0.334
+l_T_slack_hams_r: 0.334
+l_T_slack_ilio_l: 0.142
+l_T_slack_ilio_r: 0.142
+l_T_slack_rect_l: 0.398
+l_T_slack_rect_r: 0.398
+l_T_slack_sole_l: 0.245
+l_T_slack_sole_r: 0.245
+l_T_slack_tibi_l: 0.317
+l_T_slack_tibi_r: 0.317
+l_T_slack_vast_l: 0.223
+l_T_slack_vast_r: 0.223
+gast_l_E_origin_x:
+gast_l_E_origin_y:
+gast_l_F_middle_x:
+gast_l_F_middle_y:
+gast_l_G_insert_x:
+gast_l_G_insert_y:
+gast_r_B_origin_x:
+gast_r_B_origin_y:
+gast_r_C_middle_x:
+gast_r_C_middle_y:
+gast_r_D_insert_x:
+gast_r_D_insert_y:
+glut_l_A_middle_x:
+glut_l_A_middle_y:
+glut_l_A_origin_x:
+glut_l_A_origin_y:
+glut_l_E_insert_x:
+glut_l_E_insert_y:
+glut_r_A_middle_x:
+glut_r_A_middle_y:
+glut_r_A_origin_x:
+glut_r_A_origin_y:
+glut_r_B_insert_x:
+glut_r_B_insert_y:
+hams_l_A_origin_x:
+hams_l_A_origin_y:
+hams_l_F_insert_x:
+hams_l_F_insert_y:
+hams_r_A_origin_x:
+hams_r_A_origin_y:
+hams_r_C_insert_x:
+hams_r_C_insert_y:
+ilio_l_A_origin_x:
+ilio_l_A_origin_y:
+ilio_l_E_insert_x:
+ilio_l_E_insert_y:
+ilio_r_A_origin_x:
+ilio_r_A_origin_y:
+ilio_r_B_insert_x:
+ilio_r_B_insert_y:
+rect_l_A_origin_x:
+rect_l_A_origin_y:
+rect_l_E_middle_x:
+rect_l_E_middle_y:
+rect_l_F_insert_x:
+rect_l_F_insert_y:
+rect_r_A_origin_x:
+rect_r_A_origin_y:
+rect_r_B_middle_x:
+rect_r_B_middle_y:
+rect_r_C_insert_x:
+rect_r_C_insert_y:
+sole_l_F_origin_x:
+sole_l_F_origin_y:
+sole_l_G_insert_x:
+sole_l_G_insert_y:
+sole_r_C_origin_x:
+sole_r_C_origin_y:
+sole_r_D_insert_x:
+sole_r_D_insert_y:
+tibi_l_F_middle_x:
+tibi_l_F_middle_y:
+tibi_l_F_origin_x:
+tibi_l_F_origin_y:
+tibi_l_G_insert_x:
+tibi_l_G_insert_y:
+tibi_r_C_middle_x:
+tibi_r_C_middle_y:
+tibi_r_C_origin_x:
+tibi_r_C_origin_y:
+tibi_r_D_insert_x:
+tibi_r_D_insert_y:
+vast_l_E_middle_x:
+vast_l_E_middle_y:
+vast_l_E_origin_x:
+vast_l_E_origin_y:
+vast_l_F_insert_x:
+vast_l_F_insert_y:
+vast_r_B_middle_x:
+vast_r_B_middle_y:
+vast_r_B_origin_x:
+vast_r_B_origin_y:
+vast_r_C_insert_x:
+vast_r_C_insert_y:
