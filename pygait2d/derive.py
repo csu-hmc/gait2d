@@ -14,6 +14,92 @@ from .utils import ExtensorPathway
 me.dynamicsymbols._t = time_symbol
 
 
+def generate_muscles(segments):
+    """Returns the loads due to the musculotendon actuators and the activation
+    dynamics differential equations."""
+
+    # The Pathway type followed by the origin, (middle,) inersetion bodies
+    muscle_descriptions = {
+        'ilio_r': ('Linear', 'A', 'B'),
+        'hams_r': ('Linear', 'A', 'C'),
+        'glut_r': ('Obstacle', 'A', 'A', 'B'),
+        'rect_r': ('Extensor', 'A', 'B', 'C'),
+        'vast_r': ('Extensor', 'B', 'B', 'C'),
+        'gast_r': ('Obstacle', 'B', 'C', 'D'),
+        'sole_r': ('Linear', 'C', 'D'),
+        'tibi_r': ('Obstacle', 'C', 'C', 'D'),
+        'ilio_l': ('Linear', 'A', 'E'),
+        'hams_l': ('Linear', 'A', 'F'),
+        'glut_l': ('Obstacle', 'A', 'A', 'E'),
+        'rect_l': ('Extensor', 'A', 'E', 'F'),
+        'vast_l': ('Extensor', 'E', 'E', 'F'),
+        'gast_l': ('Obstacle', 'E', 'F', 'G'),
+        'sole_l': ('Linear', 'F', 'G'),
+        'tibi_l': ('Obstacle', 'F', 'F', 'G'),
+    }
+
+    def get_segment_by_label(label):
+        for seg in segments:
+            if seg.reference_frame.name == label:
+                return seg
+        raise ValueError(f'No segment with label: {label}!')
+
+    def setup_point(muscle_label, body_label, point_name):
+        label = '_'.join([muscle_label, body_label, point_name])
+        point = me.Point(label)
+        seg = get_segment_by_label(body_label)
+        x, y = sy.symbols(label + '_x, ' + label + '_y', real=True)
+        # the muscle points are defined using the body fixed unit vectors for
+        # the body that the point is fixed in
+        point.set_pos(seg.origin_joint,
+                      x*seg.reference_frame.x + y*seg.reference_frame.y)
+        point.v2pt_theory(seg.origin_joint,
+                          seg.inertial_frame,
+                          seg.reference_frame)
+        return point
+
+    muscle_loads = []
+    muscle_actvs = []
+    muscle_stats = []
+    for muscle_label, pathway_data in muscle_descriptions.items():
+        pathway_type = pathway_data[0]
+        body_labels = pathway_data[1:]
+
+        origin_point = setup_point(muscle_label, body_labels[0], 'origin')
+        insert_point = setup_point(muscle_label, body_labels[-1], 'insert')
+
+        if pathway_type == 'Linear':
+            pathway = me.LinearPathway(origin_point, insert_point)
+        elif len(body_labels) > 2:
+            middle_point = setup_point(muscle_label, body_labels[1], 'middle')
+            if pathway_type == 'Obstacle':
+                pathway = me.ObstacleSetPathway(origin_point, middle_point,
+                                                insert_point)
+            elif pathway_type == 'Extensor':
+                seg = get_segment_by_label(body_labels[-1])  # shin
+                # TODO : Check the definition of the knee angle for this
+                # pathway.
+                pathway = ExtensorPathway(
+                    origin_point,
+                    insert_point,
+                    middle_point,
+                    seg.inertial_frame.z,
+                    origin_point.pos_from(middle_point),
+                    insert_point.pos_from(middle_point),
+                    0.03,  # radius
+                    # a negative knee angle flexes the knee
+                    -seg.generalized_coordinate_symbol)
+
+        act = bm.FirstOrderActivationDeGroote2016.with_defaults(muscle_label)
+        mus = bm.MusculotendonDeGroote2016.with_defaults(
+            muscle_label, pathway, act)
+        muscle_loads += list(mus.to_loads())
+        muscle_stats.append(mus.a)
+        muscle_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
+
+    return muscle_loads, muscle_actvs, muscle_stats
+
+
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
@@ -66,26 +152,6 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
                             'E': (BodySegment, 'Left Thigh', 'Left Knee'),
                             'F': (BodySegment, 'Left Shank', 'Left Ankle'),
                             'G': (FootSegment, 'Left Foot', 'Left Heel')}
-
-    # Pathway, Body1, Body2, ..., BodyN
-    muscle_descriptions = {
-        'ilio_r': ('Linear', 'A', 'B'),
-        'hams_r': ('Linear', 'A', 'C'),
-        'glut_r': ('Obstacle', 'A', 'A', 'B'),
-        'rect_r': ('Extensor', 'A', 'B', 'C'),
-        'vast_r': ('Extensor', 'B', 'B', 'C'),
-        'gast_r': ('Obstacle', 'B', 'C', 'D'),
-        'sole_r': ('Linear', 'C', 'D'),
-        'tibi_r': ('Obstacle', 'C', 'C', 'D'),
-        'ilio_l': ('Linear', 'A', 'E'),
-        'hams_l': ('Linear', 'A', 'F'),
-        'glut_l': ('Obstacle', 'A', 'A', 'E'),
-        'rect_l': ('Extensor', 'A', 'E', 'F'),
-        'vast_l': ('Extensor', 'E', 'E', 'F'),
-        'gast_l': ('Obstacle', 'E', 'F', 'G'),
-        'sole_l': ('Linear', 'F', 'G'),
-        'tibi_l': ('Obstacle', 'F', 'F', 'G'),
-    }
 
     ground = me.ReferenceFrame('N')
     origin = me.Point('O')
@@ -183,65 +249,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
     external_forces_torques.append((segments[0].mass_center, trunk_force_x *
                                     ground.x + trunk_force_y * ground.y))
 
-    # muscles
-    def get_segment_by_label(label):
-        for seg in segments:
-            if seg.reference_frame.name == label:
-                return seg
-        raise ValueError(f'No segment with label: {label}!')
+    mus_loads, mus_actvs, mus_states = generate_muscles(segments)
 
-    for muscle_label, pathway_data in muscle_descriptions.items():
-        pathway_type = pathway_data[0]
-        body_labels = pathway_data[1:]
-        origin_label = '_'.join([muscle_label, body_labels[0], 'origin'])
-        insert_label = '_'.join([muscle_label, body_labels[-1], 'insert'])
-        origin_point = me.Point(origin_label)
-        insert_point = me.Point(insert_label)
-        seg = get_segment_by_label(body_labels[0])
-        x, y = sy.symbols(origin_label + '_x, ' + origin_label + '_y',
-                          real=True)
-        origin_point.set_pos(seg.origin_joint, x*seg.reference_frame.x +
-                             y*seg.reference_frame.y)
-        origin_point.v2pt_theory(seg.origin_joint, seg.inertial_frame,
-                                 seg.reference_frame)
-
-        seg = get_segment_by_label(body_labels[-1])
-        x, y = sy.symbols(insert_label + '_x, ' + insert_label + '_y',
-                          real=True)
-        insert_point.set_pos(seg.origin_joint, x*seg.reference_frame.x +
-                             y*seg.reference_frame.y)
-        insert_point.v2pt_theory(seg.origin_joint, seg.inertial_frame,
-                                 seg.reference_frame)
-        if pathway_type == 'Linear':
-            pathway = me.LinearPathway(origin_point, insert_point)
-        elif len(body_labels) > 2:
-            middle_label = '_'.join([muscle_label, body_labels[1], 'middle'])
-            middle_point = me.Point(middle_label)
-            seg = get_segment_by_label(body_labels[1])
-            x, y = sy.symbols(middle_label + '_x, ' +
-                              middle_label + '_y',
-                              real=True)
-            middle_point.set_pos(seg.origin_joint,
-                                 x*seg.reference_frame.x +
-                                 y*seg.reference_frame.y)
-            middle_point.v2pt_theory(seg.origin_joint, seg.inertial_frame,
-                                     seg.reference_frame)
-            if pathway_type == 'Obstacle':
-                pathway = me.ObstacleSetPathway(origin_point, middle_point,
-                                                insert_point)
-            elif pathway_type == 'Extensor':
-                seg = get_segment_by_label(body_labels[-1])  # shin
-                pathway = ExtensorPathway(
-                    origin_point,
-                    insert_point,
-                    middle_point,
-                    seg.inertial_frame.z,
-                    origin_point.pos_from(middle_point),
-                    insert_point.pos_from(middle_point),
-                    0.03,  # radius
-                    seg.generalized_coordinate_symbol)
-
-        print(pathway)
+    external_forces_torques += mus_loads
 
     # add contact model constants
     # TODO : these should be grabbed from the segments, not recreated.
