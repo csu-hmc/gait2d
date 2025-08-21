@@ -109,87 +109,88 @@ l_T_slack_tibi_l: 0.317
 l_T_slack_tibi_r: 0.317
 l_T_slack_vast_l: 0.223
 l_T_slack_vast_r: 0.223
-gast_l_E_origin_x:
-gast_l_E_origin_y:
-gast_l_F_middle_x:
-gast_l_F_middle_y:
-gast_l_G_insert_x:
-gast_l_G_insert_y:
-gast_r_B_origin_x:
-gast_r_B_origin_y:
-gast_r_C_middle_x:
-gast_r_C_middle_y:
-gast_r_D_insert_x:
-gast_r_D_insert_y:
-glut_l_A_middle_x:
-glut_l_A_middle_y:
-glut_l_A_origin_x:
-glut_l_A_origin_y:
-glut_l_E_insert_x:
-glut_l_E_insert_y:
-glut_r_A_middle_x:
-glut_r_A_middle_y:
-glut_r_A_origin_x:
-glut_r_A_origin_y:
-glut_r_B_insert_x:
-glut_r_B_insert_y:
-hams_l_A_origin_x:
-hams_l_A_origin_y:
-hams_l_F_insert_x:
-hams_l_F_insert_y:
-hams_r_A_origin_x:
-hams_r_A_origin_y:
-hams_r_C_insert_x:
-hams_r_C_insert_y:
-ilio_l_A_origin_x:
-ilio_l_A_origin_y:
-ilio_l_E_insert_x:
-ilio_l_E_insert_y:
-ilio_r_A_origin_x:
-ilio_r_A_origin_y:
-ilio_r_B_insert_x:
-ilio_r_B_insert_y:
-rect_l_A_origin_x:
-rect_l_A_origin_y:
-rect_l_E_middle_x:
-rect_l_E_middle_y:
-rect_l_F_insert_x:
-rect_l_F_insert_y:
-rect_r_A_origin_x:
-rect_r_A_origin_y:
-rect_r_B_middle_x:
-rect_r_B_middle_y:
-rect_r_C_insert_x:
-rect_r_C_insert_y:
-sole_l_F_origin_x:
-sole_l_F_origin_y:
-sole_l_G_insert_x:
-sole_l_G_insert_y:
-sole_r_C_origin_x:
-sole_r_C_origin_y:
-sole_r_D_insert_x:
-sole_r_D_insert_y:
-tibi_l_F_middle_x:
-tibi_l_F_middle_y:
-tibi_l_F_origin_x:
-tibi_l_F_origin_y:
-tibi_l_G_insert_x:
-tibi_l_G_insert_y:
-tibi_r_C_middle_x:
-tibi_r_C_middle_y:
-tibi_r_C_origin_x:
-tibi_r_C_origin_y:
-tibi_r_D_insert_x:
-tibi_r_D_insert_y:
-vast_l_E_middle_x:
-vast_l_E_middle_y:
-vast_l_E_origin_x:
-vast_l_E_origin_y:
-vast_l_F_insert_x:
-vast_l_F_insert_y:
-vast_r_B_middle_x:
-vast_r_B_middle_y:
-vast_r_B_origin_x:
-vast_r_B_origin_y:
-vast_r_C_insert_x:
-vast_r_C_insert_y:
+# muscle attachments estimated from Jason's sketch
+gast_l_E_origin_x: -0.05
+gast_l_E_origin_y: 0.025
+gast_l_F_middle_x: -0.04
+gast_l_F_middle_y: 0.39
+gast_l_G_insert_x: -0.06
+gast_l_G_insert_y: -0.025
+gast_r_B_origin_x: -0.05
+gast_r_B_origin_y: 0.025
+gast_r_C_middle_x: -0.04
+gast_r_C_middle_y: 0.39
+gast_r_D_insert_x: -0.06
+gast_r_D_insert_y: -0.025
+glut_l_A_middle_x: -0.06
+glut_l_A_middle_y: 0.02
+glut_l_A_origin_x: -0.075
+glut_l_A_origin_y: 0.125
+glut_l_E_insert_x: -0.03
+glut_l_E_insert_y: 0.375
+glut_r_A_middle_x: -0.06
+glut_r_A_middle_y: 0.02
+glut_r_A_origin_x: -0.075
+glut_r_A_origin_y: 0.125
+glut_r_B_insert_x: -0.03
+glut_r_B_insert_y: 0.375
+hams_l_A_origin_x: -0.07
+hams_l_A_origin_y: -0.05
+hams_l_F_insert_x: -0.04
+hams_l_F_insert_y: 0.4
+hams_r_A_origin_x: -0.07
+hams_r_A_origin_y: -0.05
+hams_r_C_insert_x: -0.04
+hams_r_C_insert_y: 0.4
+ilio_l_A_origin_x: 0.05
+ilio_l_A_origin_y: 0.0
+ilio_l_E_insert_x: 0.025
+ilio_l_E_insert_y: 0.36
+ilio_r_A_origin_x: 0.05
+ilio_r_A_origin_y: 0.0
+ilio_r_B_insert_x: 0.025
+ilio_r_B_insert_y: 0.36
+rect_l_A_origin_x: 0.05
+rect_l_A_origin_y: -0.01
+rect_l_E_middle_x: 0.025
+rect_l_E_middle_y: 0.03
+rect_l_F_insert_x: 0.03
+rect_l_F_insert_y: 0.38
+rect_r_A_origin_x: 0.05
+rect_r_A_origin_y: -0.01
+rect_r_B_middle_x: 0.025
+rect_r_B_middle_y: 0.03
+rect_r_C_insert_x: 0.03
+rect_r_C_insert_y: 0.38
+sole_l_F_origin_x: -0.025
+sole_l_F_origin_y: 0.25
+sole_l_G_insert_x: -0.06
+sole_l_G_insert_y: -0.025
+sole_r_C_origin_x: -0.025
+sole_r_C_origin_y: 0.25
+sole_r_D_insert_x: -0.06
+sole_r_D_insert_y: -0.025
+tibi_l_F_middle_x: 0.025
+tibi_l_F_middle_y: 0.03
+tibi_l_F_origin_x: 0.025
+tibi_l_F_origin_y: 0.22
+tibi_l_G_insert_x: 0.06
+tibi_l_G_insert_y: 0.0
+tibi_r_C_middle_x: 0.025
+tibi_r_C_middle_y: 0.03
+tibi_r_C_origin_x: 0.025
+tibi_r_C_origin_y: 0.22
+tibi_r_D_insert_x: 0.06
+tibi_r_D_insert_y: 0.0
+vast_l_E_middle_x: 0.025
+vast_l_E_middle_y: 0.03
+vast_l_E_origin_x: 0.01
+vast_l_E_origin_y: 0.22
+vast_l_F_insert_x: 0.03
+vast_l_F_insert_y: 0.38
+vast_r_B_middle_x: 0.025
+vast_r_B_middle_y: 0.03
+vast_r_B_origin_x: 0.01
+vast_r_B_origin_y: 0.22
+vast_r_C_insert_x: 0.03
+vast_r_C_insert_y: 0.38
