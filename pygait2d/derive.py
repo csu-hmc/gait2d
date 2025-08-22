@@ -17,6 +17,7 @@ me.dynamicsymbols._t = time_symbol
 def generate_muscles(segments):
     """Returns the loads due to the musculotendon actuators and the activation
     dynamics differential equations."""
+    print('Generating musculotendon pathways and activation dynamics.')
 
     # The Pathway type followed by the origin, (middle,) inersetion bodies
     muscle_descriptions = {
@@ -47,10 +48,18 @@ def generate_muscles(segments):
     def setup_point(muscle_label, body_label, point_name):
         label = '_'.join([muscle_label, body_label, point_name])
         point = me.Point(label)
+        # point will be fixed on this segment:
         seg = get_segment_by_label(body_label)
+        print(seg)
         x, y = sy.symbols(label + '_x, ' + label + '_y', real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
+        # TODO: Fix the y numerical values for points on thigh and shank
+        # The numerical values for muscle attachments were measured from:
+        # trunk: hip joint = segment.origin_joint/joint -> correct numbers
+        # thigh: knee joint = segment.joint -> incorrect (should be hip joint)
+        # shank: ankle joint = segment.joint -> incorrect (should be knee joint)
+        # foot: ankle joint = segment.origin_joint/joint -> correct numbers
         point.set_pos(seg.origin_joint,
                       x*seg.reference_frame.x + y*seg.reference_frame.y)
         point.v2pt_theory(seg.origin_joint,
@@ -60,7 +69,7 @@ def generate_muscles(segments):
 
     muscle_loads = []
     muscle_actvs = []
-    muscle_stats = []
+    muscle_states = []
     for muscle_label, pathway_data in muscle_descriptions.items():
         pathway_type = pathway_data[0]
         body_labels = pathway_data[1:]
@@ -86,21 +95,23 @@ def generate_muscles(segments):
                     seg.inertial_frame.z,
                     origin_point.pos_from(middle_point),
                     insert_point.pos_from(middle_point),
+                    # TODO : move radius to data file with values
                     0.03,  # radius
-                    # a negative knee angle flexes the knee
+                    # a negative knee angle flexes the knee (so switch sign)
                     -seg.generalized_coordinate_symbol)
 
         act = bm.FirstOrderActivationDeGroote2016.with_defaults(muscle_label)
         mus = bm.MusculotendonDeGroote2016.with_defaults(
             muscle_label, pathway, act)
         muscle_loads += list(mus.to_loads())
-        muscle_stats.append(mus.a)
+        muscle_states.append(mus.a)
         muscle_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
 
-    return muscle_loads, muscle_actvs, muscle_stats
+    return muscle_loads, muscle_actvs, muscle_states
 
 
-def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
+def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
+                               include_muscles=False):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -110,7 +121,7 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
     seat_force : boolean, optional, default=False
         If true, a contact force will be added to the hip joint to represent a
         surface higher than the ground to sit on.
-    gait_cycle_control : boolean, optinal, default=False
+    gait_cycle_control : boolean, optional, default=False
         If true, the specified forces and torques are replaced with a full
         state feeback controller summed with the forces and torques.
 
@@ -220,10 +231,6 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
             external_forces_torques.append((segment.toe,
                                             contact_force(segment.toe,
                                                           ground, origin)))
-        else:
-            external_forces_torques.append((segment.joint,
-                                            contact_force(segment.joint,
-                                                          ground, origin)))
 
         # bodies
         bodies.append(segment.rigid_body)
@@ -249,9 +256,11 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
     external_forces_torques.append((segments[0].mass_center, trunk_force_x *
                                     ground.x + trunk_force_y * ground.y))
 
-    mus_loads, mus_actvs, mus_states = generate_muscles(segments)
-
-    external_forces_torques += mus_loads
+    states = coordinates + speeds
+    if include_muscles:
+        mus_loads, mus_actvs, mus_states = generate_muscles(segments)
+        external_forces_torques += mus_loads
+        states += mus_states
 
     # add contact model constants
     # TODO : these should be grabbed from the segments, not recreated.
@@ -261,9 +270,16 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False):
     print("Initializing Kane's Method.")
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
     print("Forming Kane's Equations.")
-    kane.kanes_equations(bodies, loads=external_forces_torques)
+    fr, frstar = kane.kanes_equations(bodies, loads=external_forces_torques)
     mass_matrix = kane.mass_matrix_full
     forcing_vector = kane.forcing_full
+
+    kin_diff_eqs = sy.Matrix([k - v for k, v in kane.kindiffdict().items()])
+    equations_of_motion = kin_diff_eqs.col_join(fr + frstar)
+
+    if include_muscles:
+        equations_of_motion = equations_of_motion.col_join(
+            sy.Matrix(mus_actvs))
 
     if gait_cycle_control:
         # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
