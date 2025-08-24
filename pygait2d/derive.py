@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from dataclasses import dataclass
+
 # external libraries
-import sympy as sy
+import sympy as sm
 import sympy.physics.mechanics as me
 import sympy.physics.biomechanics as bm
 
@@ -12,6 +14,20 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
 from .utils import ExtensorPathway
 
 me.dynamicsymbols._t = time_symbol
+
+
+@dataclass
+class SymbolicModel():
+
+    activations: list
+    coordinates: list
+    excitations: list
+    kanes_method: me.KanesMethod
+    speeds: list
+    states: list
+    kinematical_diff_eqs: sm.Matrix
+    dynamical_diff_eqs: sm.Matrix
+    equations_of_motion: sm.Matrix
 
 
 def generate_muscles(segments):
@@ -51,7 +67,7 @@ def generate_muscles(segments):
         # point will be fixed on this segment:
         seg = get_segment_by_label(body_label)
         print(seg)
-        x, y = sy.symbols(label + '_x, ' + label + '_y', real=True)
+        x, y = sm.symbols(label + '_x, ' + label + '_y', real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
         # TODO: Fix the y numerical values for points on thigh and shank
@@ -70,6 +86,7 @@ def generate_muscles(segments):
     muscle_loads = []
     muscle_actvs = []
     muscle_states = []
+    muscle_excit = []
     for muscle_label, pathway_data in muscle_descriptions.items():
         pathway_type = pathway_data[0]
         body_labels = pathway_data[1:]
@@ -105,9 +122,10 @@ def generate_muscles(segments):
             muscle_label, pathway, act)
         muscle_loads += list(mus.to_loads())
         muscle_states.append(mus.a)
+        muscle_excit.append(mus.e)
         muscle_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
 
-    return muscle_loads, muscle_actvs, muscle_states
+    return muscle_loads, muscle_actvs, muscle_states, muscle_excit
 
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
@@ -124,6 +142,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     gait_cycle_control : boolean, optional, default=False
         If true, the specified forces and torques are replaced with a full
         state feeback controller summed with the forces and torques.
+    include_muscles : boolean, optional, default=False
+        If true, muscle actuators will be included in addition to the joint
+        torque actuators.
 
     Returns
     =======
@@ -258,13 +279,14 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
     states = coordinates + speeds
     if include_muscles:
-        mus_loads, mus_actvs, mus_states = generate_muscles(segments)
+        mus_loads, mus_actvs, mus_states, mus_exc = generate_muscles(segments)
         external_forces_torques += mus_loads
         states += mus_states
+        specified += mus_exc
 
     # add contact model constants
     # TODO : these should be grabbed from the segments, not recreated.
-    constants += list(sy.symbols('kc, cc, mu, vs', real=True, positive=True))
+    constants += list(sm.symbols('kc, cc, mu, vs', real=True, positive=True))
 
     # equations of motion
     print("Initializing Kane's Method.")
@@ -274,12 +296,12 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     mass_matrix = kane.mass_matrix_full
     forcing_vector = kane.forcing_full
 
-    kin_diff_eqs = sy.Matrix([k - v for k, v in kane.kindiffdict().items()])
+    kin_diff_eqs = sm.Matrix([k - v for k, v in kane.kindiffdict().items()])
     equations_of_motion = kin_diff_eqs.col_join(fr + frstar)
 
     if include_muscles:
         equations_of_motion = equations_of_motion.col_join(
-            sy.Matrix(mus_actvs))
+            sm.Matrix(mus_actvs))
 
     if gait_cycle_control:
         # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
@@ -312,18 +334,18 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         for ri in specified:
             row = []
             for xi in coordinates + speeds:
-                row.append(sy.Function('k_{}_{}'.format(ri.name, xi.name),
+                row.append(sm.Function('k_{}_{}'.format(ri.name, xi.name),
                                        real=True)(time_symbol))
             K.append(row)
-        K = sy.Matrix(K)
+        K = sm.Matrix(K)
 
         xc = []
         for xi in coordinates + speeds:
-            xc.append(sy.Function('{}_c'.format(xi.name),
+            xc.append(sm.Function('{}_c'.format(xi.name),
                                   real=True)(time_symbol))
-        r = sy.Matrix(specified)
-        xc = sy.Matrix(xc)
-        x = sy.Matrix(coordinates + speeds)
+        r = sm.Matrix(specified)
+        xc = sm.Matrix(xc)
+        x = sm.Matrix(coordinates + speeds)
 
         uc = r + K@(xc - x)
 
