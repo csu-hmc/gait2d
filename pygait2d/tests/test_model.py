@@ -18,28 +18,26 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 
 
 def test_accelerations():
-    (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
-     specified, visualization_frames, ground, origin, segments) = \
-        derive.derive_equations_of_motion()
+    symbolics = derive.derive_equations_of_motion()
 
     pydy_rhs = generate_ode_function(
-        forcing_vector,
-        coordinates,
-        speeds,
-        constants=constants,
-        mass_matrix=mass_matrix,
-        specifieds=specified,
+        symbolics.kanes_method.forcing_full,
+        symbolics.coordinates,
+        symbolics.speeds,
+        constants=symbolics.constants,
+        mass_matrix=symbolics.kanes_method.mass_matrix_full,
+        specifieds=symbolics.specifieds,
         generator='cython',
         constants_arg_type='array',
         specifieds_arg_type='array',
     )
 
-    coordinate_values = np.random.random(len(coordinates))
-    speed_values = np.random.random(len(speeds))
-    specified_values = np.random.random(len(specified))
+    coordinate_values = np.random.random(len(symbolics.coordinates))
+    speed_values = np.random.random(len(symbolics.speeds))
+    specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
-        constants, os.path.join(ROOT, 'data/example_constants.yml'))
+        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
     args = (specified_values, np.array(list(constant_map.values())))
 
     x = np.hstack((coordinate_values, speed_values))
@@ -59,28 +57,26 @@ def test_accelerations():
 
 
 def test_with_control():
-    (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
-     specified, visualization_frames, ground, origin, segments) = \
-        derive.derive_equations_of_motion(gait_cycle_control=True)
+    symbolics = derive.derive_equations_of_motion(gait_cycle_control=True)
 
     pydy_rhs = generate_ode_function(
-        forcing_vector,
-        coordinates,
-        speeds,
-        constants=constants,
-        mass_matrix=mass_matrix,
-        specifieds=specified,
+        symbolics.kanes_method.forcing_full,
+        symbolics.coordinates,
+        symbolics.speeds,
+        constants=symbolics.constants,
+        mass_matrix=symbolics.kanes_method.mass_matrix_full,
+        specifieds=symbolics.specifieds,
         generator='cython',
         constants_arg_type='array',
         specifieds_arg_type='array',
     )
 
-    coordinate_values = np.random.random(len(coordinates))
-    speed_values = np.random.random(len(speeds))
-    specified_values = np.random.random(len(specified))
+    coordinate_values = np.random.random(len(symbolics.coordinates))
+    speed_values = np.random.random(len(symbolics.speeds))
+    specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
-        constants, os.path.join(ROOT, 'data/example_constants.yml'))
+        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
     args = (specified_values, np.array(list(constant_map.values())))
 
     x = np.hstack((coordinate_values, speed_values))

@@ -18,16 +18,48 @@ me.dynamicsymbols._t = time_symbol
 
 @dataclass
 class SymbolicModel():
+    # states = [coordinates, speeds, activations]
+    # specifieds = [forces, torques, excitations]
+    # eoms = [kinematical, dynamical, muscle]
 
-    activations: list
-    coordinates: list
-    excitations: list
     kanes_method: me.KanesMethod
-    speeds: list
-    states: list
-    kinematical_diff_eqs: sm.Matrix
-    dynamical_diff_eqs: sm.Matrix
-    equations_of_motion: sm.Matrix
+    dyn_diff_eqs: sm.Matrix
+    constants: sm.Matrix
+    specifieds: sm.Matrix
+    inertial_frame: me.ReferenceFrame
+    origin: me.Point
+    segments: list
+    viz_frames: list
+    mus_diff_eqs: sm.Matrix = None
+    activations: sm.Matrix = None
+    excitations: sm.Matrix = None
+
+    @property
+    def equations_of_motion(self):
+        eoms = self.kin_diff_eqs.col_join(self.dyn_diff_eqs)
+        if self.mus_diff_eqs is not None:
+            eoms = eoms.col_join(self.mus_diff_eqs)
+        return eoms
+
+    @property
+    def states(self):
+        states = self.coordinates.col_join(self.speeds)
+        if self.activations is not None:
+            states = states.col_join(self.activations)
+        return states
+
+    @property
+    def coordinates(self):
+        return self.kanes_method.q
+
+    @property
+    def speeds(self):
+        return self.kanes_method.u
+
+    @property
+    def kin_diff_eqs(self):
+        return sm.Matrix([k - v for k, v in
+                          self.kanes_method.kindiffdict().items()])
 
 
 def generate_muscles(segments):
@@ -356,5 +388,20 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         specified += K[:]
         specified += xc[:]
 
-    return (mass_matrix, forcing_vector, kane, constants, coordinates, speeds,
-            specified, visualization_frames, ground, origin, segments)
+    sym_mod = SymbolicModel(
+        kanes_method=kane,
+        dyn_diff_eqs=fr + frstar,
+        constants=constants,
+        specifieds=specified,
+        inertial_frame=ground,
+        origin=origin,
+        segments=segments,
+        viz_frames=visualization_frames,
+    )
+
+    if include_muscles:
+        sym_mod.mus_diff_eqs = sm.Matrix(mus_actvs)
+        sym_mod.activations = sm.Matrix(mus_states)
+        sym_mod.excitations = sm.Matrix(mus_exc)
+
+    return sym_mod
