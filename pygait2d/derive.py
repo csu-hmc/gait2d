@@ -284,6 +284,10 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
             external_forces_torques.append((segment.toe,
                                             contact_force(segment.toe,
                                                           ground, origin)))
+        else:
+            external_forces_torques.append((segment.joint,
+                                            contact_force(segment.joint,
+                                                          ground, origin)))
 
         # bodies
         bodies.append(segment.rigid_body)
