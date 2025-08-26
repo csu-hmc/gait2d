@@ -11,8 +11,11 @@ from numpy import testing
 from pydy.codegen.ode_function_generators import generate_ode_function
 from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
 import sympy as sm
+from scipy.integrate import odeint
+import matplotlib.pyplot as plt
 
 # local imports
+from pygait2d.utils import generate_animation
 from .. import derive, simulate
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
@@ -136,3 +139,26 @@ def test_with_muscles():
 
     assert isinstance(pydy_xdot, np.ndarray)
     testing.assert_allclose(pydy_xdot[:9], speed_values)
+
+    args = (np.zeros(len(symbolics.specifieds)),
+            np.array(list(constant_map.values())))
+
+    time_vector = np.linspace(0.0, 0.001, num=2)
+    initial_conditions = np.zeros(len(symbolics.states))
+    initial_conditions[1] = 1.0  # set hip above ground
+    initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
+    initial_conditions[4] = -np.deg2rad(60.0)  # right knee angle
+    initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
+    initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
+    initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
+    initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
+    trajectories = odeint(pydy_rhs, initial_conditions, time_vector, args=args)
+
+    ani = generate_animation(symbolics,
+                             time_vector,
+                             trajectories,
+                             np.zeros((len(time_vector),
+                                       len(symbolics.specifieds))),
+                             np.array(list(constant_map.values())))
+
+    plt.show()

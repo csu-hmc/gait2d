@@ -103,11 +103,17 @@ class ExtensorPathway(me.PathwayBase):
         """
         return self.radius*self.coordinate.diff(me.dynamicsymbols._t)
 
+    @property
+    def plot_points(self):
+        return (self.origin, self.parent_tangency_point, self.axis_point,
+                self.child_tangency_point, self.insertion)
+
     def to_loads(self, force_magnitude):
         """Loads in the correct format to be supplied to `KanesMethod`.
         Forces applied to origin, insertion, and P from the muscle wrapped
         over circular arc of radius r.
         """
+        # TODO: generate these points on init
         self.parent_tangency_point = me.Point('Aw')  # fixed in parent
         self.child_tangency_point = me.Point('Bw')  # fixed in child
         self.parent_tangency_point.set_pos(
@@ -166,6 +172,16 @@ def generate_animation(symmod, times, xs, rs, ps):
         lshank.joint,
     ], color="k")
 
+    if symmod.muscles is not None:
+        for i, mus in enumerate(symmod.muscles):
+            color = "C{}".format(i)
+            try:
+                scene.add_line(mus.pathway.plot_points, color=color)
+                print(mus.pathway.plot_points, color)
+            except AttributeError:
+                scene.add_line(mus.pathway.attachments, color=color)
+                print(mus.pathway.attachments, color)
+
     # creates a moving ground (many points to deal with matplotlib limitation)
     # ?? can we make the dashed line move to the left?
     scene.add_line([origin.locatenew('gl', s*ground.x) for s in
@@ -204,6 +220,8 @@ def generate_animation(symmod, times, xs, rs, ps):
     ax.set_xlim((-0.8, 0.8))
     ax.set_ylim((-0.2, 1.4))
     ax.set_aspect('equal')
+
+    plt.show()
 
     def update(i):
         scene.evaluate_system(*gait_cycle[:, i])

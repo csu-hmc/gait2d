@@ -33,7 +33,6 @@ rhs = generate_ode_function(
     specifieds_arg_type='array',
 )
 
-
 args = (np.zeros(len(symbolics.specifieds)),
         np.array(list(constant_values.values())))
 
