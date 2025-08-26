@@ -17,7 +17,50 @@ me.dynamicsymbols._t = time_symbol
 
 
 @dataclass
-class SymbolicModel():
+class Symbolics():
+    """Storage for all of the SymPy and SymPy Mechanics objects.
+
+    Parameters
+    ==========
+    kanes_method: KanesMethod
+        A ``KanesMethod`` object in which the equations of motion have been
+        derived.
+    dyn_diff_eqs: sm.Matrix
+        Kane's Fr + Fr* expression.
+    constants : list of Symbol
+        Constants in the equations of motion.
+    specifieds : list of Function(t), optional
+        Specifed variables in the equations of motion.
+    inertial_frame: me.ReferenceFrame
+        An inertial reference frame representing the Earth and the direction of
+        the uniform gravitational field.
+    origin : Point
+        A point fixed in the ground reference frame used for calculating
+        translational velocities.
+    segments : list of Segment
+        All of the segment objects that make up the human.
+    viz_frames: list of VisualizationFrame, optional
+    muscles: list of MusculotendonDeGroote2016, optional
+        All of the musculotendon actuators in the human.
+
+    Attributes
+    ==========
+    activations: list of Function(t), optional
+        Muscle activation state variables.
+    coordinates : list of Function(t)
+        The generalized coordinates of the system.
+    excitations: list of Function(t), optional
+        Specified muscle excitation input variables.
+    forcing_vector : Matrix, shape(18, 1)
+        Full forcing vector where: ``mass_matrix*x' = forcing vector``.
+    mass_matrix : Matrix, shape(18, 18)
+        Full mass matrix of the system to be multiplied by ``x' =
+        [coordinates', speeds']``.
+    mus_diff_eqs: sm.Matrix = None
+    speeds : list of Function(t)
+        The generalized speeds of the system.
+
+    """
     # states = [coordinates, speeds, activations]
     # specifieds = [forces, torques, excitations]
     # eoms = [kinematical, dynamical, muscle]
@@ -29,18 +72,37 @@ class SymbolicModel():
     inertial_frame: me.ReferenceFrame
     origin: me.Point
     segments: list
-    viz_frames: list
-    mus_diff_eqs: sm.Matrix = None
-    activations: sm.Matrix = None
-    excitations: sm.Matrix = None
+    viz_frames: list = None
     muscles: list = None
 
     @property
     def equations_of_motion(self):
         eoms = self.kin_diff_eqs.col_join(self.dyn_diff_eqs)
-        if self.mus_diff_eqs is not None:
+        if self.muscles is not None:
             eoms = eoms.col_join(self.mus_diff_eqs)
         return eoms
+
+    @property
+    def excitations(self):
+        if self.muscles is not None:
+            return sm.Matrix([mus.e for mus in self.muscles])
+        else:
+            return None
+
+    @property
+    def activations(self):
+        if self.muscles is not None:
+            return sm.Matrix([mus.a for mus in self.muscles])
+        else:
+            return None
+
+    @property
+    def mus_diff_eqs(self):
+        if self.muscles is not None:
+            return sm.Matrix([mus.a.diff() - mus.rhs()[0, 0]
+                              for mus in self.muscles])
+        else:
+            return None
 
     @property
     def states(self):
@@ -116,8 +178,6 @@ def generate_muscles(segments):
 
     muscles = []
     mus_loads = []
-    mus_actvs = []
-    mus_states = []
     mus_excit = []
     mus_const = []
     for mus_label, pathway_data in muscle_descriptions.items():
@@ -140,8 +200,6 @@ def generate_muscles(segments):
                                                 insert_point)
             elif pathway_type == 'Extensor':
                 seg = get_segment_by_label(body_labels[-1])  # shin
-                # TODO : Check the definition of the knee angle for this
-                # pathway.
                 pathway = ExtensorPathway(
                     origin_point,
                     insert_point,
@@ -159,12 +217,10 @@ def generate_muscles(segments):
             mus_label, pathway, act)
         muscles.append(mus)
         mus_loads += list(mus.to_loads())
-        mus_states.append(mus.a)
         mus_excit.append(mus.e)
-        mus_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
         mus_const += mus.constants[:]
 
-    return mus_loads, mus_actvs, mus_states, mus_excit, mus_const, muscles
+    return mus_loads, mus_excit, mus_const, muscles
 
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
@@ -187,31 +243,8 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
     Returns
     =======
-    mass_matrix : Matrix, shape(18, 18)
-        Full mass matrix of the system to be multiplied by ``x' =
-        [coordinates', speeds']``.
-    forcing_vector : Matrix, shape(18, 1)
-        Full forcing vector where: ``mass_matrix*x' = forcing vector``.
-    kane : sympy.physics.mechanics.Kane
-        A KanesMethod object in which the equations of motion have been
-        derived. All symbolics are accessible from this object if needed.
-    constants : list of Symbol
-        The constants in the equations of motion.
-    coordinates : list of Function(t)
-        The generalized coordinates of the system.
-    speeds : list of Function(t)
-        The generalized speeds of the system.
-    specified : list of Function(t), optional, default=None
-        The specifed quantities of the system.
-    visualization_frames : list of VizFrame
-    ground : ReferenceFrame
-        An inertial reference frame representing the Earth and a the direction
-        of the uniform gravitational field.
-    origin : Point
-        A point fixed in the ground reference frame used for calculating
-        translational velocities.
-    segments : list of Segment
-        All of the segment objects that make up the human.
+    symbolics: Symbolics
+        Contains all symbolic model components.
 
     """
 
@@ -324,12 +357,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     # TODO : these should be grabbed from the segments, not recreated.
     constants += list(sm.symbols('kc, cc, mu, vs', real=True, positive=True))
 
-    states = coordinates + speeds
     if include_muscles:
-        (mus_loads, mus_actvs, mus_states, mus_exc,
-         mus_con, muscles) = generate_muscles(segments)
+        (mus_loads, mus_exc, mus_con, muscles) = generate_muscles(segments)
         external_forces_torques += mus_loads
-        states += mus_states
         specified += mus_exc
         constants += mus_con
 
@@ -338,13 +368,6 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
     print("Forming Kane's Equations.")
     fr, frstar = kane.kanes_equations(bodies, loads=external_forces_torques)
-
-    kin_diff_eqs = sm.Matrix([k - v for k, v in kane.kindiffdict().items()])
-    equations_of_motion = kin_diff_eqs.col_join(fr + frstar)
-
-    if include_muscles:
-        equations_of_motion = equations_of_motion.col_join(
-            sm.Matrix(mus_actvs))
 
     if gait_cycle_control:
         # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
@@ -394,13 +417,13 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
         repl = {k: v for k, v in zip(specified, uc)}
 
-        # TODO : Needs update to work with SymbolicModel
+        # TODO : Needs update to work with Symbolics
         forcing_vector = forcing_vector.xreplace(repl)
 
         specified += K[:]
         specified += xc[:]
 
-    sym_mod = SymbolicModel(
+    sym_mod = Symbolics(
         kanes_method=kane,
         dyn_diff_eqs=fr + frstar,
         constants=constants,
@@ -412,9 +435,6 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     )
 
     if include_muscles:
-        sym_mod.mus_diff_eqs = sm.Matrix(mus_actvs)
-        sym_mod.activations = sm.Matrix(mus_states)
-        sym_mod.excitations = sm.Matrix(mus_exc)
         sym_mod.muscles = muscles
 
     return sym_mod
