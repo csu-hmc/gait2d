@@ -176,10 +176,12 @@ def generate_animation(symmod, times, xs, rs, ps):
         for i, mus in enumerate(symmod.muscles):
             color = "C{}".format(i)
             try:
-                scene.add_line(mus.pathway.plot_points, color=color)
+                scene.add_line(mus.pathway.plot_points, color=color,
+                               marker='.')
                 print(mus.pathway.plot_points, color)
             except AttributeError:
-                scene.add_line(mus.pathway.attachments, color=color)
+                scene.add_line(mus.pathway.attachments, color=color,
+                               marker='.')
                 print(mus.pathway.attachments, color)
 
     # creates a moving ground (many points to deal with matplotlib limitation)
@@ -221,7 +223,8 @@ def generate_animation(symmod, times, xs, rs, ps):
     ax.set_ylim((-0.2, 1.4))
     ax.set_aspect('equal')
 
-    plt.show()
+    # TODO : return plot here so a single frame can be viewed
+    # plt.show()
 
     def update(i):
         scene.evaluate_system(*gait_cycle[:, i])
@@ -235,6 +238,6 @@ def generate_animation(symmod, times, xs, rs, ps):
         interval=(times[1] - times[0])*1000,
     )
 
-    #animation.save('human_gait.gif', fps=int(1.0/(times[1] - times[0])))
+    #ani.save('muscles.gif', fps=int(1.0/(times[1] - times[0])))
 
     return ani
