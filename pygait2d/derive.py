@@ -113,23 +113,28 @@ def generate_muscles(segments):
         point.v2pt_theory(seg.origin_joint,
                           seg.inertial_frame,
                           seg.reference_frame)
-        return point
+        return point, x, y
 
-    muscle_loads = []
-    muscle_actvs = []
-    muscle_states = []
-    muscle_excit = []
-    for muscle_label, pathway_data in muscle_descriptions.items():
+    mus_loads = []
+    mus_actvs = []
+    mus_states = []
+    mus_excit = []
+    mus_const = []
+    for mus_label, pathway_data in muscle_descriptions.items():
         pathway_type = pathway_data[0]
         body_labels = pathway_data[1:]
 
-        origin_point = setup_point(muscle_label, body_labels[0], 'origin')
-        insert_point = setup_point(muscle_label, body_labels[-1], 'insert')
+        origin_point, x, y = setup_point(mus_label, body_labels[0], 'origin')
+        mus_const += [x, y]
+        insert_point, x, y = setup_point(mus_label, body_labels[-1], 'insert')
+        mus_const += [x, y]
 
         if pathway_type == 'Linear':
             pathway = me.LinearPathway(origin_point, insert_point)
         elif len(body_labels) > 2:
-            middle_point = setup_point(muscle_label, body_labels[1], 'middle')
+            middle_point, x, y = setup_point(mus_label, body_labels[1],
+                                             'middle')
+            mus_const += [x, y]
             if pathway_type == 'Obstacle':
                 pathway = me.ObstacleSetPathway(origin_point, middle_point,
                                                 insert_point)
@@ -149,15 +154,16 @@ def generate_muscles(segments):
                     # a negative knee angle flexes the knee (so switch sign)
                     -seg.generalized_coordinate_symbol)
 
-        act = bm.FirstOrderActivationDeGroote2016.with_defaults(muscle_label)
+        act = bm.FirstOrderActivationDeGroote2016.with_defaults(mus_label)
         mus = bm.MusculotendonDeGroote2016.with_defaults(
-            muscle_label, pathway, act)
-        muscle_loads += list(mus.to_loads())
-        muscle_states.append(mus.a)
-        muscle_excit.append(mus.e)
-        muscle_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
+            mus_label, pathway, act)
+        mus_loads += list(mus.to_loads())
+        mus_states.append(mus.a)
+        mus_excit.append(mus.e)
+        mus_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
+        mus_const += mus.constants[:]
 
-    return muscle_loads, muscle_actvs, muscle_states, muscle_excit
+    return mus_loads, mus_actvs, mus_states, mus_excit, mus_const
 
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
@@ -313,24 +319,24 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     external_forces_torques.append((segments[0].mass_center, trunk_force_x *
                                     ground.x + trunk_force_y * ground.y))
 
-    states = coordinates + speeds
-    if include_muscles:
-        mus_loads, mus_actvs, mus_states, mus_exc = generate_muscles(segments)
-        external_forces_torques += mus_loads
-        states += mus_states
-        specified += mus_exc
-
     # add contact model constants
     # TODO : these should be grabbed from the segments, not recreated.
     constants += list(sm.symbols('kc, cc, mu, vs', real=True, positive=True))
+
+    states = coordinates + speeds
+    if include_muscles:
+        (mus_loads, mus_actvs, mus_states, mus_exc,
+         mus_con) = generate_muscles(segments)
+        external_forces_torques += mus_loads
+        states += mus_states
+        specified += mus_exc
+        constants += mus_con
 
     # equations of motion
     print("Initializing Kane's Method.")
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
     print("Forming Kane's Equations.")
     fr, frstar = kane.kanes_equations(bodies, loads=external_forces_torques)
-    mass_matrix = kane.mass_matrix_full
-    forcing_vector = kane.forcing_full
 
     kin_diff_eqs = sm.Matrix([k - v for k, v in kane.kindiffdict().items()])
     equations_of_motion = kin_diff_eqs.col_join(fr + frstar)
@@ -387,6 +393,7 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
         repl = {k: v for k, v in zip(specified, uc)}
 
+        # TODO : Needs update to work with SymbolicModel
         forcing_vector = forcing_vector.xreplace(repl)
 
         specified += K[:]
