@@ -118,13 +118,13 @@ class ExtensorPathway(me.PathwayBase):
         self.child_tangency_point = me.Point('Bw')  # fixed in child
         self.parent_tangency_point.set_pos(
             self.axis_point,
-            -self.radius*sm.cos(self.origin_angle)*self.parent_axis.cross(
+            self.radius*sm.cos(self.origin_angle)*self.parent_axis.cross(
                 self.axis)
             + self.radius*sm.sin(self.origin_angle)*self.parent_axis,
         )
         self.child_tangency_point.set_pos(
             self.axis_point,
-            self.radius*sm.cos(self.insertion_angle)*self.child_axis.cross(
+            -self.radius*sm.cos(self.insertion_angle)*self.child_axis.cross(
                 self.axis)
             + self.radius*sm.sin(self.insertion_angle)*self.child_axis),
         parent_force_direction_vector = self.origin.pos_from(
