@@ -7,10 +7,12 @@ dependencies:
   - pip
   - setuptools
   # run
+  - matplotlib
   - numpy
   - pydy
   - python
   - pyyaml
+  - symmeplot
   - sympy
   # examples
   - scipy

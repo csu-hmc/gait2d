@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from matplotlib.animation import FuncAnimation
+from symmeplot.matplotlib import Scene3D
 from sympy import srepr, Matrix, sympify
+import matplotlib.pyplot as plt
+import numpy as np
 import sympy as sm
 import sympy.physics.mechanics as me
 
@@ -131,3 +135,88 @@ class ExtensorPathway(me.PathwayBase):
             me.Force(self.insertion, force_on_child),
         ]
         return loads
+
+
+def generate_animation(symmod, times, xs, rs, ps):
+
+    ground = symmod.inertial_frame
+    origin = symmod.origin
+    trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = symmod.segments
+
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+
+    # hip_proj = origin.locatenew('m', qax*ground.x)
+    # scene = Scene3D(ground, hip_proj, ax=ax3d)
+    scene = Scene3D(ground, origin, ax=ax)
+
+    # creates the stick person
+    scene.add_line([
+        rshank.joint,
+        rfoot.toe,
+        rfoot.heel,
+        rshank.joint,
+        rthigh.joint,
+        trunk.joint,
+        trunk.mass_center,
+        trunk.joint,
+        lthigh.joint,
+        lshank.joint,
+        lfoot.heel,
+        lfoot.toe,
+        lshank.joint,
+    ], color="k")
+
+    # creates a moving ground (many points to deal with matplotlib limitation)
+    # ?? can we make the dashed line move to the left?
+    scene.add_line([origin.locatenew('gl', s*ground.x) for s in
+                    np.linspace(-2.0, 2.0)], linestyle='--',
+                    color='tab:green', axlim_clip=True)
+
+    # adds CoM and unit vectors for each body segment
+    for seg in symmod.segments:
+        scene.add_body(seg.rigid_body)
+
+    # show ground reaction force vectors at the heels and toes, scaled to
+    # visually reasonable length
+    #scene.add_vector(contact_force(rfoot.toe, ground, origin, v)/600.0,
+                        #rfoot.toe, color="tab:blue")
+    #scene.add_vector(contact_force(rfoot.heel, ground, origin, v)/600.0,
+                        #rfoot.heel, color="tab:blue")
+    #scene.add_vector(contact_force(lfoot.toe, ground, origin, v)/600.0,
+                        #lfoot.toe, color="tab:blue")
+    #scene.add_vector(contact_force(lfoot.heel, ground, origin, v)/600.0,
+                        #lfoot.heel, color="tab:blue")
+
+    scene.lambdify_system(symmod.states[:] + symmod.specifieds[:] +
+                          symmod.constants[:])
+    gait_cycle = np.vstack((
+        xs.T,  # q, u shape(2n, N)
+        #np.zeros((3, len(times))),  # Fax, Fay, Ta (hand of god), shape(3, N)
+        rs.T,  # r, shape(q, N)
+        np.repeat(np.atleast_2d(ps).T, len(times), axis=1),  # p, shape(r, N)
+    ))
+    scene.evaluate_system(*gait_cycle[:, 0])
+
+    scene.axes.set_proj_type("ortho")
+    scene.axes.view_init(90, -90, 0)
+    scene.plot()
+
+    ax.set_xlim((-0.8, 0.8))
+    ax.set_ylim((-0.2, 1.4))
+    ax.set_aspect('equal')
+
+    def update(i):
+        scene.evaluate_system(*gait_cycle[:, i])
+        scene.update()
+        return scene.artists
+
+    ani = FuncAnimation(
+        fig,
+        update,
+        frames=range(len(times)),
+        interval=(times[1] - times[0])*1000,
+    )
+
+    #animation.save('human_gait.gif', fps=int(1.0/(times[1] - times[0])))
+
+    return ani
