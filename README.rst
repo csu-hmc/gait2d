@@ -3,10 +3,13 @@ Introduction
 
 gait2d is a dynamic model that contains the essential elements for simulating
 human gait in the sagittal plane. The model has been used in earlier forms by
-Ackermann and van den Bogert (2010) [Ackermann2010]_ and by Gerritsen et al.
-(1998) [Gerritsen1998]_. The main features of the model are:
+Gerritsen et al.  (1998) [Gerritsen1998]_ and Ackermann and van den Bogert
+(2010) [Ackermann2010]_. The main features of the model are:
 
 - Seven body segments
+- Hunt-Crossley-style foot contact model
+- Sixteen musculotendon actuators
+- Differentiable dynamics
 - Fast execution
 
 Model dynamics and outputs are twice differentiable with respect to all inputs,
@@ -65,8 +68,9 @@ Model Description
 =================
 
 The model is planar (xy plane) and there are seven rigid bodies. All rotations
-are defined to be about the z axis. When all configuration variables are set to
-zero, the model is standing upright and the trunk's hip joint is at the
+are defined to be positive about the z axis for a child body relative to its
+parent body, e.g thigh relative to trunk. When all configuration variables are
+set to zero, the model is standing upright and the trunk's hip joint is at the
 inertial origin with the human facing in the positive x direction.
 
 Rigid bodies and constants
@@ -142,8 +146,8 @@ Rigid bodies and constants
 
   - ``kc``: ground contact stiffness [N/m^3]
   - ``cc``: ground contact damping [s/m]
-  - ``mu``: friction coefficient
-  - ``vs``: velocity constant [m/s]
+  - ``mu``: ground contact friction coefficient
+  - ``vs``: ground contact velocity constant [m/s]
   - ``g``: acceleration due to gravity [m/s^2]
 
 Generalized coordinates
