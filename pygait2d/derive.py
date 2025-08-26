@@ -33,6 +33,7 @@ class SymbolicModel():
     mus_diff_eqs: sm.Matrix = None
     activations: sm.Matrix = None
     excitations: sm.Matrix = None
+    muscles: list = None
 
     @property
     def equations_of_motion(self):
@@ -102,13 +103,18 @@ def generate_muscles(segments):
         x, y = sm.symbols(label + '_x, ' + label + '_y', real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
-        point.set_pos(seg.origin_joint,
+        if body_label == 'A':
+            origin_point = seg.joint
+        else:
+            origin_point = seg.origin_joint
+        point.set_pos(origin_point,
                       x*seg.reference_frame.x + y*seg.reference_frame.y)
-        point.v2pt_theory(seg.origin_joint,
+        point.v2pt_theory(origin_point,
                           seg.inertial_frame,
                           seg.reference_frame)
         return point, x, y
 
+    muscles = []
     mus_loads = []
     mus_actvs = []
     mus_states = []
@@ -151,13 +157,14 @@ def generate_muscles(segments):
         act = bm.FirstOrderActivationDeGroote2016.with_defaults(mus_label)
         mus = bm.MusculotendonDeGroote2016.with_defaults(
             mus_label, pathway, act)
+        muscles.append(mus)
         mus_loads += list(mus.to_loads())
         mus_states.append(mus.a)
         mus_excit.append(mus.e)
         mus_actvs.append(mus.a.diff() - mus.rhs()[0, 0])
         mus_const += mus.constants[:]
 
-    return mus_loads, mus_actvs, mus_states, mus_excit, mus_const
+    return mus_loads, mus_actvs, mus_states, mus_excit, mus_const, muscles
 
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
@@ -320,7 +327,7 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     states = coordinates + speeds
     if include_muscles:
         (mus_loads, mus_actvs, mus_states, mus_exc,
-         mus_con) = generate_muscles(segments)
+         mus_con, muscles) = generate_muscles(segments)
         external_forces_torques += mus_loads
         states += mus_states
         specified += mus_exc
@@ -408,5 +415,6 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         sym_mod.mus_diff_eqs = sm.Matrix(mus_actvs)
         sym_mod.activations = sm.Matrix(mus_states)
         sym_mod.excitations = sm.Matrix(mus_exc)
+        sym_mod.muscles = muscles
 
     return sym_mod
