@@ -102,12 +102,6 @@ def generate_muscles(segments):
         x, y = sm.symbols(label + '_x, ' + label + '_y', real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
-        # TODO: Fix the y numerical values for points on thigh and shank
-        # The numerical values for muscle attachments were measured from:
-        # trunk: hip joint = segment.origin_joint/joint -> correct numbers
-        # thigh: knee joint = segment.joint -> incorrect (should be hip joint)
-        # shank: ankle joint = segment.joint -> incorrect (should be knee joint)
-        # foot: ankle joint = segment.origin_joint/joint -> correct numbers
         point.set_pos(seg.origin_joint,
                       x*seg.reference_frame.x + y*seg.reference_frame.y)
         point.v2pt_theory(seg.origin_joint,
