@@ -179,7 +179,7 @@ def test_with_muscles(makeplot=False, makeanimate=False):
     if makeplot and not makeanimate:
         print('Showing the plot.')
         plt.show()
-    else:
+    elif makeanimate:
         print('Generating the animation.')
         # NOTE : It is required to assign this to a variable if you want the
         # animation to run in the plot window.
