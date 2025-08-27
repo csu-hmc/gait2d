@@ -43,6 +43,7 @@ class Symbolics():
     viz_frames: list of VisualizationFrame, optional
     muscles: list of MusculotendonDeGroote2016, optional
         All of the musculotendon actuators in the human.
+    controller_repl: dictionary
 
     Attributes
     ==========
@@ -52,17 +53,20 @@ class Symbolics():
         The generalized coordinates of the system.
     excitations: list of Function(t), optional
         Specified muscle excitation input variables.
-    forcing_vector : Matrix, shape(18, 1)
-        Full forcing vector where: ``mass_matrix*x' = forcing vector``.
-    mass_matrix : Matrix, shape(18, 18)
-        Full mass matrix of the system to be multiplied by ``x' =
-        [coordinates', speeds']``.
     mus_diff_eqs: sm.Matrix = None
     speeds : list of Function(t)
         The generalized speeds of the system.
     states : list of Function(t)
 
     """
+    # TODO : Add these as properties.
+    #forcing_vector : Matrix, shape(18, 1)
+        #Full forcing vector where: ``mass_matrix*x' = forcing vector``.
+    #mass_matrix : Matrix, shape(18, 18)
+        #Full mass matrix of the system to be multiplied by ``x' =
+        #[coordinates', speeds']``.
+
+    # TODO : Sort out the order of these for each model combination.
     # states = [coordinates, speeds, activations]
     # specifieds = [forces, torques, excitations]
     # eoms = [kinematical, dynamical, muscle]
@@ -76,27 +80,12 @@ class Symbolics():
     segments: list
     viz_frames: list = None
     muscles: list = None
+    controller_repl: dict = None
 
     @property
-    def equations_of_motion(self):
-        eoms = self.kin_diff_eqs.col_join(self.dyn_diff_eqs)
-        if self.muscles is not None:
-            eoms = eoms.col_join(self.mus_diff_eqs)
-        return eoms
-
-    @property
-    def excitations(self):
-        if self.muscles is not None:
-            return [mus.e for mus in self.muscles]
-        else:
-            return []
-
-    @property
-    def activations(self):
-        if self.muscles is not None:
-            return [mus.a for mus in self.muscles]
-        else:
-            return []
+    def kin_diff_eqs(self):
+        return sm.Matrix([k - v for k, v in
+                          self.kanes_method.kindiffdict().items()])
 
     @property
     def mus_diff_eqs(self):
@@ -107,11 +96,13 @@ class Symbolics():
             return None
 
     @property
-    def states(self):
-        states = self.coordinates + self.speeds
-        if self.activations:
-            states += self.activations
-        return states
+    def equations_of_motion(self):
+        eoms = self.kin_diff_eqs.col_join(self.dyn_diff_eqs)
+        if self.muscles is not None:
+            eoms = eoms.col_join(self.mus_diff_eqs)
+        if self.controller_repl is not None:
+            eoms = eoms.xreplace(self.controller_repl)
+        return eoms
 
     @property
     def coordinates(self):
@@ -122,9 +113,79 @@ class Symbolics():
         return self.kanes_method.u[:]
 
     @property
-    def kin_diff_eqs(self):
-        return sm.Matrix([k - v for k, v in
-                          self.kanes_method.kindiffdict().items()])
+    def activations(self):
+        if self.muscles is not None:
+            return [mus.a for mus in self.muscles]
+        else:
+            return []
+
+    @property
+    def states(self):
+        states = self.coordinates + self.speeds
+        if self.activations:
+            states += self.activations
+        return states
+
+    @property
+    def excitations(self):
+        if self.muscles is not None:
+            return [mus.e for mus in self.muscles]
+        else:
+            return []
+
+
+def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
+    # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
+    # joint_state)
+    # r = [Fax(t), Fay(t), Ta(t), Tb(t), Tc(t), Td(t), Te(t), Tf(t), Tg(t)]
+    # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
+    #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
+    # commanded states
+    # xc = [qax_c(t), qay_c(t), qa_c(t), qb_c(t), qc_c(t), qd_c(t), qe_c(t), qf_c(t), qg_c(t)]
+    #       uax_c(t), uay_c(t), ua_c(t), ub_c(t), uc_c(t), ud_c(t), ue_c(t), uf_c(t), ug_c(t)]
+    # controlled joint torques
+    # uc(t) = r(t) + K(t)*(xc(t) - x(t))
+    # r(t) : force or torque
+    # K(t) : time varying full state feedback gain matrix
+    # xc(t) : commanded (desired) states
+    # x(t) : states
+    # K is, in general, 9 x 18
+    # the first three rows and columns will be zero if hand of god is
+    # absent, which effectively makes it a 6x18
+    # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf, kax_qg,
+    #      kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue, kax_uf, kax_ug|
+    #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf, kay_qg|
+    #     |ka_qax, ka_qay, ka_qa, ka_qb, ka_qc, ka_qd, ka_qe, ka_qf, ka_qg|
+    #     ...
+    #     |kg_qax, kg_qay, kg_qa, kg_qb, kg_qc, kg_qd, kg_qe, kg_qf, kg_qg|
+    # We can just go through the final equations of motion and replace the
+    # joint torques Tb through Tg with Tb -> Tb + kb_qb*(qb_des - qb) +
+    # kb_ub*(ub_des - qb) + ...
+    print('Generating gait cycle torque controller.')
+    K = []
+    for ri in specified:
+        row = []
+        for xi in coordinates + speeds:
+            row.append(time_varying('k_{}_{}'.format(ri.name, xi.name)))
+        K.append(row)
+    K = sm.Matrix(K)
+
+    xc = []
+    for xi in coordinates + speeds:
+        xc.append(time_varying('{}_c'.format(xi.name))),
+
+    r = sm.Matrix(specified)
+    xc = sm.Matrix(xc)
+    x = sm.Matrix(coordinates + speeds)
+
+    uc = r + K@(xc - x)
+
+    repl = {k: v for k, v in zip(specified, uc)}
+
+    specified += K[:]
+    specified += xc[:]
+
+    return repl, specified
 
 
 def generate_muscles(segments):
@@ -249,7 +310,7 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     Returns
     =======
     symbolics: Symbolics
-        Contains all symbolic model components.
+        Contains all symbolic model components, see :py:class:`Symbolics`.
 
     """
 
@@ -378,58 +439,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     fr, frstar = kane.kanes_equations(bodies, loads=external_forces_torques)
 
     if gait_cycle_control:
-        # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
-        # joint_state)
-        # r = [Fax(t), Fay(t), Ta(t), Tb(t), Tc(t), Td(t), Te(t), Tf(t), Tg(t)]
-        # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
-        #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
-        # commanded states
-        # xc = [qax_c(t), qay_c(t), qa_c(t), qb_c(t), qc_c(t), qd_c(t), qe_c(t), qf_c(t), qg_c(t)]
-        #       uax_c(t), uay_c(t), ua_c(t), ub_c(t), uc_c(t), ud_c(t), ue_c(t), uf_c(t), ug_c(t)]
-        # controlled joint torques
-        # uc(t) = r(t) + K(t)*(xc(t) - x(t))
-        # r(t) : force or torque
-        # K(t) : time varying full state feedback gain matrix
-        # xc(t) : commanded (desired) states
-        # x(t) : states
-        # K is, in general, 9 x 18
-        # the first three rows and columns will be zero if hand of god is
-        # absent, which effectively makes it a 6x18
-        # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf, kax_qg,
-        #      kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue, kax_uf, kax_ug|
-        #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf, kay_qg|
-        #     |ka_qax, ka_qay, ka_qa, ka_qb, ka_qc, ka_qd, ka_qe, ka_qf, ka_qg|
-        #     ...
-        #     |kg_qax, kg_qay, kg_qa, kg_qb, kg_qc, kg_qd, kg_qe, kg_qf, kg_qg|
-        # We can just go through the final equations of motion and replace the
-        # joint torques Tb through Tg with Tb -> Tb + kb_qb*(qb_des - qb) +
-        # kb_ub*(ub_des - qb) + ...
-        K = []
-        for ri in specified:
-            row = []
-            for xi in coordinates + speeds:
-                row.append(sm.Function('k_{}_{}'.format(ri.name, xi.name),
-                                       real=True)(time_symbol))
-            K.append(row)
-        K = sm.Matrix(K)
-
-        xc = []
-        for xi in coordinates + speeds:
-            xc.append(sm.Function('{}_c'.format(xi.name),
-                                  real=True)(time_symbol))
-        r = sm.Matrix(specified)
-        xc = sm.Matrix(xc)
-        x = sm.Matrix(coordinates + speeds)
-
-        uc = r + K@(xc - x)
-
-        repl = {k: v for k, v in zip(specified, uc)}
-
-        # TODO : Needs update to work with Symbolics
-        forcing_vector = forcing_vector.xreplace(repl)
-
-        specified += K[:]
-        specified += xc[:]
+        repl, specified = generate_gait_cycle_torque_controller(coordinates,
+                                                                speeds,
+                                                                specified)
 
     sym_mod = Symbolics(
         kanes_method=kane,
@@ -444,5 +456,8 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
     if include_muscles:
         sym_mod.muscles = muscles
+
+    if gait_cycle_control:
+        sym_mod.controller_repl = repl
 
     return sym_mod
