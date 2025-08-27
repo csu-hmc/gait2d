@@ -90,20 +90,21 @@ def test_with_control():
     testing.assert_allclose(pydy_xdot[:9], speed_values)
 
 
-def test_with_muscles():
+def test_with_muscles(animate=False):
     symbolics = derive.derive_equations_of_motion(include_muscles=True)
 
+    # TODO : Move the construction of M and F into Symbolics.
     num_simple = len(symbolics.coordinates) + len(symbolics.activations)
     num_dyn = len(symbolics.speeds)
 
-    actd_zero_repl = dict(zip(symbolics.activations.diff(),
+    actd_zero_repl = dict(zip([a.diff() for a in symbolics.activations],
                               sm.zeros(len(symbolics.activations))))
 
     M = sm.BlockMatrix([[sm.eye(num_simple),
                          sm.zeros(num_simple, num_dyn)],
                         [sm.zeros(num_dyn, num_simple),
                          symbolics.kanes_method.mass_matrix]])
-    F = sm.BlockMatrix([[symbolics.speeds],
+    F = sm.BlockMatrix([[sm.Matrix(symbolics.speeds)],
                         [-symbolics.mus_diff_eqs.xreplace(actd_zero_repl)],
                         [symbolics.kanes_method.forcing]])
     # NOTE: generate_ode_function fails if you leave these as block matrices
@@ -115,11 +116,11 @@ def test_with_muscles():
     # NOTE: variable lists must be lists, not matrices for this function
     pydy_rhs = generate_ode_function(
         F,
-        symbolics.coordinates.col_join(symbolics.activations)[:],
-        symbolics.speeds[:],
-        constants=symbolics.constants[:],
+        symbolics.coordinates + symbolics.activations,
+        symbolics.speeds,
+        constants=symbolics.constants,
         mass_matrix=M,
-        specifieds=symbolics.specifieds[:],
+        specifieds=symbolics.specifieds,
         generator='cython',
         constants_arg_type='array',
         specifieds_arg_type='array',
@@ -146,19 +147,20 @@ def test_with_muscles():
     time_vector = np.linspace(0.0, 0.5, num=100)
     initial_conditions = np.zeros(len(symbolics.states))
     initial_conditions[1] = 1.0  # set hip above ground
-    #initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
-    #initial_conditions[4] = -np.deg2rad(60.0)  # right knee angle
-    #initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
-    #initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
-    #initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
-    #initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
+    initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
+    initial_conditions[4] = -np.deg2rad(60.0)  # right knee angle
+    initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
+    initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
+    initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
+    initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
     trajectories = odeint(pydy_rhs, initial_conditions, time_vector, args=args)
 
-    ani = generate_animation(symbolics,
-                             time_vector,
-                             trajectories,
-                             np.zeros((len(time_vector),
-                                       len(symbolics.specifieds))),
-                             np.array(list(constant_map.values())))
+    if animate:
+        ani = generate_animation(symbolics,
+                                 time_vector,
+                                 trajectories,
+                                 np.zeros((len(time_vector),
+                                           len(symbolics.specifieds))),
+                                 np.array(list(constant_map.values())))
 
-    plt.show()
+        plt.show()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# builtin
 from dataclasses import dataclass
 
 # external libraries
@@ -59,6 +60,7 @@ class Symbolics():
     mus_diff_eqs: sm.Matrix = None
     speeds : list of Function(t)
         The generalized speeds of the system.
+    states : list of Function(t)
 
     """
     # states = [coordinates, speeds, activations]
@@ -67,8 +69,8 @@ class Symbolics():
 
     kanes_method: me.KanesMethod
     dyn_diff_eqs: sm.Matrix
-    constants: sm.Matrix
-    specifieds: sm.Matrix
+    constants: list
+    specifieds: list
     inertial_frame: me.ReferenceFrame
     origin: me.Point
     segments: list
@@ -85,16 +87,16 @@ class Symbolics():
     @property
     def excitations(self):
         if self.muscles is not None:
-            return sm.Matrix([mus.e for mus in self.muscles])
+            return [mus.e for mus in self.muscles]
         else:
-            return None
+            return []
 
     @property
     def activations(self):
         if self.muscles is not None:
-            return sm.Matrix([mus.a for mus in self.muscles])
+            return [mus.a for mus in self.muscles]
         else:
-            return None
+            return []
 
     @property
     def mus_diff_eqs(self):
@@ -106,18 +108,18 @@ class Symbolics():
 
     @property
     def states(self):
-        states = self.coordinates.col_join(self.speeds)
-        if self.activations is not None:
-            states = states.col_join(self.activations)
+        states = self.coordinates + self.speeds
+        if self.activations:
+            states += self.activations
         return states
 
     @property
     def coordinates(self):
-        return self.kanes_method.q
+        return self.kanes_method.q[:]
 
     @property
     def speeds(self):
-        return self.kanes_method.u
+        return self.kanes_method.u[:]
 
     @property
     def kin_diff_eqs(self):
@@ -128,6 +130,7 @@ class Symbolics():
 def generate_muscles(segments):
     """Returns the loads due to the musculotendon actuators and the activation
     dynamics differential equations."""
+
     print('Generating musculotendon pathways and activation dynamics.')
 
     # The Pathway type followed by the origin, (middle,) inersetion bodies
@@ -151,17 +154,19 @@ def generate_muscles(segments):
     }
 
     def get_segment_by_label(label):
+        """Returns Segment based on label A, B, C, D, E, F, G."""
         for seg in segments:
             if seg.reference_frame.name == label:
                 return seg
         raise ValueError(f'No segment with label: {label}!')
 
     def setup_point(muscle_label, body_label, point_name):
+        """Creates and attaches a point to a segment relative to its reference
+        point."""
         label = '_'.join([muscle_label, body_label, point_name])
         point = me.Point(label)
         # point will be fixed on this segment:
         seg = get_segment_by_label(body_label)
-        print(seg)
         x, y = sm.symbols(label + '_x, ' + label + '_y', real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
@@ -249,6 +254,7 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     """
 
     print('Forming positions, velocities, accelerations and forces.')
+    # reference frame label: Segment, segment name, distal joint name
     segment_descriptions = {'A': (TrunkSegment, 'Trunk', 'Hip'),
                             'B': (BodySegment, 'Right Thigh', 'Right Knee'),
                             'C': (BodySegment, 'Right Shank', 'Right Ankle'),
@@ -335,6 +341,8 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         visualization_frames += segment.visualization_frames()
 
     if seat_force:
+        # NOTE : The seat height is set to the length of the shank + the depth
+        # of the foot.
         seat_level = origin.locatenew(
             'seat', (segments[2].length_symbol -
                      segments[3].foot_depth)*ground.y)
