@@ -5,14 +5,13 @@ model."""
 
 import os
 
-import yaml
-import numpy as np
-from numpy import testing
-from pydy.codegen.ode_function_generators import generate_ode_function
-from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
-import sympy as sm
-from scipy.integrate import odeint
 import matplotlib.pyplot as plt
+import numpy as np
+import sympy as sm
+import yaml
+from algait2de.gait2de import evaluate_autolev_rhs as autolev_rhs
+from pydy.codegen.ode_function_generators import generate_ode_function
+from scipy.integrate import odeint
 
 # local imports
 from pygait2d.utils import generate_animation
@@ -24,6 +23,7 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 def test_accelerations():
     symbolics = derive.derive_equations_of_motion()
 
+    print('pydy generating the equations of motion')
     pydy_rhs = generate_ode_function(
         symbolics.kanes_method.forcing_full,
         symbolics.coordinates,
@@ -36,16 +36,30 @@ def test_accelerations():
         specifieds_arg_type='array',
     )
 
+    print('lambdifying the equations of motion')
+    lam_M_F = sm.lambdify((symbolics.coordinates, symbolics.speeds,
+                           symbolics.specifieds, symbolics.constants),
+                          (symbolics.kanes_method.mass_matrix_full,
+                           symbolics.kanes_method.forcing_full), cse=True)
+
+    def lam_rhs(q, u, r, s):
+        M, F = lam_M_F(q, u, r, s)
+        return np.linalg.solve(M, F.squeeze())
+
     coordinate_values = np.random.random(len(symbolics.coordinates))
     speed_values = np.random.random(len(symbolics.speeds))
     specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
         symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
-    args = (specified_values, np.array(list(constant_map.values())))
+    constant_values = np.array(list(constant_map.values()))
 
+    args = (specified_values, constant_values)
     x = np.hstack((coordinate_values, speed_values))
     pydy_xdot = pydy_rhs(x, 0.0, *args)
+
+    lam_xdot = lam_rhs(coordinate_values, speed_values, specified_values,
+                       constant_values)
 
     with open(os.path.join(ROOT, 'data/example_constants.yml'), 'r') as f:
         constants_dict = yaml.load(f, Loader=yaml.SafeLoader)
@@ -57,7 +71,8 @@ def test_accelerations():
                                                       specified_values,
                                                       constants_dict)
 
-    testing.assert_allclose(pydy_xdot[9:], accelerations)
+    np.testing.assert_allclose(pydy_xdot[9:], accelerations)
+    np.testing.assert_allclose(lam_xdot[9:], accelerations)
 
 
 def test_with_control():
@@ -87,7 +102,7 @@ def test_with_control():
     pydy_xdot = pydy_rhs(x, 0.0, *args)
 
     assert isinstance(pydy_xdot, np.ndarray)
-    testing.assert_allclose(pydy_xdot[:9], speed_values)
+    np.testing.assert_allclose(pydy_xdot[:9], speed_values)
 
 
 def test_with_muscles(animate=False):
@@ -139,7 +154,7 @@ def test_with_muscles(animate=False):
     pydy_xdot = pydy_rhs(x, 0.0, *args)
 
     assert isinstance(pydy_xdot, np.ndarray)
-    testing.assert_allclose(pydy_xdot[:9], speed_values)
+    np.testing.assert_allclose(pydy_xdot[:9], speed_values)
 
     args = (np.zeros(len(symbolics.specifieds)),
             np.array(list(constant_map.values())))
