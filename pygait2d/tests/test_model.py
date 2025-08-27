@@ -14,7 +14,7 @@ from pydy.codegen.ode_function_generators import generate_ode_function
 from scipy.integrate import odeint
 
 # local imports
-from pygait2d.utils import generate_animation
+from pygait2d.utils import plot, animate
 from .. import derive, simulate
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
@@ -105,7 +105,7 @@ def test_with_control():
     np.testing.assert_allclose(pydy_xdot[:9], speed_values)
 
 
-def test_with_muscles(animate=False):
+def test_with_muscles(makeplot=False, makeanimate=False):
     symbolics = derive.derive_equations_of_motion(include_muscles=True)
 
     # TODO : Move the construction of M and F into Symbolics.
@@ -148,7 +148,8 @@ def test_with_muscles(animate=False):
 
     constant_map = simulate.load_constants(
         symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
-    args = (specified_values, np.array(list(constant_map.values())))
+    constant_values = np.array(list(constant_map.values()))
+    args = (specified_values, constant_values)
 
     x = np.hstack((coordinate_values, muscle_values, speed_values))
     pydy_xdot = pydy_rhs(x, 0.0, *args)
@@ -162,20 +163,28 @@ def test_with_muscles(animate=False):
     time_vector = np.linspace(0.0, 0.5, num=100)
     initial_conditions = np.zeros(len(symbolics.states))
     initial_conditions[1] = 1.0  # set hip above ground
-    initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
-    initial_conditions[4] = -np.deg2rad(60.0)  # right knee angle
-    initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
-    initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
-    initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
-    initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
+    #initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
+    #initial_conditions[4] = -np.deg2rad(60.0)  # right knee angle
+    #initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
+    #initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
+    #initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
+    #initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
     trajectories = odeint(pydy_rhs, initial_conditions, time_vector, args=args)
 
-    if animate:
-        ani = generate_animation(symbolics,
-                                 time_vector,
-                                 trajectories,
-                                 np.zeros((len(time_vector),
-                                           len(symbolics.specifieds))),
-                                 np.array(list(constant_map.values())))
+    if makeplot or makeanimate:
+        print('Generating the plot.')
+        scene, fig, ax = plot(symbolics, time_vector, initial_conditions,
+                              specified_values, constant_values)
 
+    if makeplot and not makeanimate:
+        print('Showing the plot.')
+        plt.show()
+    else:
+        print('Generating the animation.')
+        # NOTE : It is required to assign this to a variable if you want the
+        # animation to run in the plot window.
+        ani = animate(scene, fig, time_vector, trajectories,
+                      np.zeros((len(time_vector), len(symbolics.specifieds))),
+                      np.array(list(constant_map.values())))
+        print('Showing the animation.')
         plt.show()

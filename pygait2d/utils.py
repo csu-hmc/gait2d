@@ -143,16 +143,36 @@ class ExtensorPathway(me.PathwayBase):
         return loads
 
 
-def generate_animation(symmod, times, xs, rs, ps):
+def plot(sym, times, x, r, p):
+    """Returns a symmeplot generated matplotlib figure of the model's
+    configuration.
 
-    ground = symmod.inertial_frame
-    origin = symmod.origin
-    trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = symmod.segments
+    Parameters
+    ==========
+    sym: Symbolics
+    times: array_like, shape(N,)
+    x: array_like, shape(n,)
+        State values ordered as Symbolics.states.
+    r: array_like, shape(,)
+        Specified values ordered as Symbolics.specifieds.
+    p: array_like, shape(,)
+        Constant values ordered as Symbolics.constants.
+
+    Returns
+    =======
+    scene: Scene3D
+        symmeplot scene.
+    fig: Figure
+    ax: Axes
+
+    """
+
+    ground = sym.inertial_frame
+    origin = sym.origin
+    trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = sym.segments
 
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
 
-    # hip_proj = origin.locatenew('m', qax*ground.x)
-    # scene = Scene3D(ground, hip_proj, ax=ax3d)
     scene = Scene3D(ground, origin, ax=ax)
 
     # creates the stick person
@@ -170,28 +190,26 @@ def generate_animation(symmod, times, xs, rs, ps):
         lfoot.heel,
         lfoot.toe,
         lshank.joint,
-    ], color="k")
+    ], color="k", marker='.')
 
-    if symmod.muscles is not None:
-        for i, mus in enumerate(symmod.muscles):
+    if sym.muscles is not None:
+        for i, mus in enumerate(sym.muscles):
             color = "C{}".format(i)
             try:
                 scene.add_line(mus.pathway.plot_points, color=color,
                                marker='.')
-                print(mus.pathway.plot_points, color)
             except AttributeError:
                 scene.add_line(mus.pathway.attachments, color=color,
                                marker='.')
-                print(mus.pathway.attachments, color)
 
     # creates a moving ground (many points to deal with matplotlib limitation)
     # ?? can we make the dashed line move to the left?
     scene.add_line([origin.locatenew('gl', s*ground.x) for s in
-                    np.linspace(-2.0, 2.0)], linestyle='--',
-                    color='tab:green', axlim_clip=True)
+                    np.linspace(-2.0, 2.0)], linestyle='--', color='tab:green',
+                   axlim_clip=True)
 
     # adds CoM and unit vectors for each body segment
-    for seg in symmod.segments:
+    for seg in sym.segments:
         scene.add_body(seg.rigid_body)
 
     # show ground reaction force vectors at the heels and toes, scaled to
@@ -205,39 +223,59 @@ def generate_animation(symmod, times, xs, rs, ps):
     #scene.add_vector(contact_force(lfoot.heel, ground, origin, v)/600.0,
                         #lfoot.heel, color="tab:blue")
 
-    scene.lambdify_system(symmod.states[:] + symmod.specifieds[:] +
-                          symmod.constants[:])
-    gait_cycle = np.vstack((
-        xs.T,  # q, u shape(2n, N)
-        #np.zeros((3, len(times))),  # Fax, Fay, Ta (hand of god), shape(3, N)
-        rs.T,  # r, shape(q, N)
-        np.repeat(np.atleast_2d(ps).T, len(times), axis=1),  # p, shape(r, N)
-    ))
-    scene.evaluate_system(*gait_cycle[:, 0])
+    scene.lambdify_system(sym.states + sym.specifieds + sym.constants)
+    scene.evaluate_system(*np.hstack((x, r, p)))
 
     scene.axes.set_proj_type("ortho")
     scene.axes.view_init(90, -90, 0)
     scene.plot()
 
-    ax.set_xlim((-0.8, 0.8))
-    ax.set_ylim((-0.2, 1.4))
+    #ax.set_xlim((-0.8, 0.8))
+    #ax.set_ylim((-0.2, 1.4))
     ax.set_aspect('equal')
 
-    # TODO : return plot here so a single frame can be viewed
-    # plt.show()
+    return scene, fig, ax
+
+
+def animate(scene, fig, times, xs, rs, ps, file_path=None):
+    """
+
+    Parameters
+    ==========
+    scene: Scene3D
+        A scene preconstructed from ``plot()``.
+    times: array_like, shape(N,)
+        Monotonically increasing time with equally spaced time intervals.
+    xs : array_like, shape(n, N)
+    rs : array_like, shape(q, N)
+    ps : array_like, shape(r,)
+    file_path : string, optional
+        If a path to a movie file is provided, the animation will be saved to
+        file.
+
+    """
+
+    gait_cycle = np.vstack((
+        xs.T,  # q, u shape(2n, N)
+        rs.T,  # r, shape(q, N)
+        np.repeat(np.atleast_2d(ps).T, len(times), axis=1),  # p, shape(r, N)
+    ))
 
     def update(i):
         scene.evaluate_system(*gait_cycle[:, i])
         scene.update()
         return scene.artists
 
+    deltat = times[1] - times[0]  # seconds
+
     ani = FuncAnimation(
         fig,
         update,
         frames=range(len(times)),
-        interval=(times[1] - times[0])*1000,
+        interval=deltat*1000,  # milliseconds
     )
 
-    #ani.save('muscles.gif', fps=int(1.0/(times[1] - times[0])))
+    if file_path is not None:
+        ani.save(file_path, fps=int(1.0/deltat))
 
     return ani
