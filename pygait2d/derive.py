@@ -82,6 +82,17 @@ class Symbolics():
     muscles: list = None
     controller_repl: dict = None
 
+    def __str__(self):
+        states = self.states
+        specifieds = self.specifieds
+        constants = self.constants
+        msg = (
+            f'States ({len(states)}): {states}\n\n'
+            f'Specifieds ({len(specifieds)}): {specifieds}\n\n'
+            f'Constants ({len(constants)}): {constants}'
+        )
+        return msg
+
     @property
     def kin_diff_eqs(self):
         return sm.Matrix([k - v for k, v in
