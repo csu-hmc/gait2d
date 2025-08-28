@@ -60,11 +60,11 @@ class Symbolics():
 
     """
     # TODO : Add these as properties.
-    #forcing_vector : Matrix, shape(18, 1)
-        #Full forcing vector where: ``mass_matrix*x' = forcing vector``.
-    #mass_matrix : Matrix, shape(18, 18)
-        #Full mass matrix of the system to be multiplied by ``x' =
-        #[coordinates', speeds']``.
+    # forcing_vector : Matrix, shape(18, 1)
+    # Full forcing vector where: ``mass_matrix*x' = forcing vector``.
+    # mass_matrix : Matrix, shape(18, 18)
+    # Full mass matrix of the system to be multiplied by ``x' =
+    # [coordinates', speeds']``.
 
     # TODO : Sort out the order of these for each model combination.
     # states = [coordinates, speeds, activations]
@@ -152,8 +152,10 @@ def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
     # x = [qax(t), qay(t), qa(t), qb(t), qc(t), qd(t), qe(t), qf(t), qg(t),
     #      uax(t), uay(t), ua(t), ub(t), uc(t), ud(t), ue(t), uf(t), ug(t)]
     # commanded states
-    # xc = [qax_c(t), qay_c(t), qa_c(t), qb_c(t), qc_c(t), qd_c(t), qe_c(t), qf_c(t), qg_c(t)]
-    #       uax_c(t), uay_c(t), ua_c(t), ub_c(t), uc_c(t), ud_c(t), ue_c(t), uf_c(t), ug_c(t)]
+    # xc = [qax_c(t), qay_c(t), qa_c(t), qb_c(t), qc_c(t), qd_c(t), qe_c(t),
+    #       qf_c(t), qg_c(t),
+    #       uax_c(t), uay_c(t), ua_c(t), ub_c(t), uc_c(t), ud_c(t), ue_c(t),
+    #       uf_c(t), ug_c(t)]
     # controlled joint torques
     # uc(t) = r(t) + K(t)*(xc(t) - x(t))
     # r(t) : force or torque
@@ -163,9 +165,11 @@ def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
     # K is, in general, 9 x 18
     # the first three rows and columns will be zero if hand of god is
     # absent, which effectively makes it a 6x18
-    # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf, kax_qg,
-    #      kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue, kax_uf, kax_ug|
-    #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf, kay_qg|
+    # K = |kax_qax, kax_qay, kax_qa, kax_qb, kax_qc, kax_qd, kax_qe, kax_qf,
+    #      kax_qg, kax_uax, kax_uay, kax_ua, kax_ub, kax_uc, kax_ud, kax_ue,
+    #      kax_uf, kax_ug|
+    #     |kay_qax, kay_qay, kay_qa, kay_qb, kay_qc, kay_qd, kay_qe, kay_qf,
+    #      kay_qg|
     #     |ka_qax, ka_qay, ka_qa, ka_qb, ka_qc, ka_qd, ka_qe, ka_qf, ka_qg|
     #     ...
     #     |kg_qax, kg_qay, kg_qa, kg_qb, kg_qc, kg_qd, kg_qe, kg_qf, kg_qg|
