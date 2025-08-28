@@ -4,8 +4,8 @@
 model."""
 
 import os
+import timeit
 
-import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sm
 import yaml
@@ -14,22 +14,25 @@ from pydy.codegen.ode_function_generators import generate_ode_function
 from scipy.integrate import odeint
 
 # local imports
-from pygait2d.utils import plot, animate
-from .. import derive, simulate
+from .. import derive, simulate, utils
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 
 
 def test_accelerations():
-    symbolics = derive.derive_equations_of_motion()
 
-    print('pydy generating the equations of motion')
+    print('Deriving the symbolic dynamics model.')
+    symbolics = derive.derive_equations_of_motion()
+    print(symbolics)
+
+    print('Generating the PyDy ODE numerical function.')
     pydy_rhs = generate_ode_function(
-        symbolics.kanes_method.forcing_full,
+        symbolics.kanes_method.forcing,
         symbolics.coordinates,
         symbolics.speeds,
         constants=symbolics.constants,
-        mass_matrix=symbolics.kanes_method.mass_matrix_full,
+        mass_matrix=symbolics.kanes_method.mass_matrix,
+        coordinate_derivatives=sm.Matrix(symbolics.speeds),
         specifieds=symbolics.specifieds,
         generator='cython',
         constants_arg_type='array',
@@ -39,12 +42,14 @@ def test_accelerations():
     print('lambdifying the equations of motion')
     lam_M_F = sm.lambdify((symbolics.coordinates, symbolics.speeds,
                            symbolics.specifieds, symbolics.constants),
-                          (symbolics.kanes_method.mass_matrix_full,
-                           symbolics.kanes_method.forcing_full), cse=True)
+                          (symbolics.kanes_method.mass_matrix,
+                           symbolics.kanes_method.forcing), cse=True)
 
     def lam_rhs(q, u, r, s):
+        qdot = u
         M, F = lam_M_F(q, u, r, s)
-        return np.linalg.solve(M, F.squeeze())
+        udot = np.linalg.solve(M, F.squeeze())
+        return np.hstack((qdot, udot))
 
     coordinate_values = np.random.random(len(symbolics.coordinates))
     speed_values = np.random.random(len(symbolics.speeds))
@@ -58,8 +63,16 @@ def test_accelerations():
     x = np.hstack((coordinate_values, speed_values))
     pydy_xdot = pydy_rhs(x, 0.0, *args)
 
+    print('PyDy evaluation time:',
+          timeit.timeit(lambda: pydy_rhs(x, 0.0, *args), number=1000))
+
     lam_xdot = lam_rhs(coordinate_values, speed_values, specified_values,
                        constant_values)
+
+    print('Lambdify evaluation time:',
+          timeit.timeit(lambda: lam_rhs(coordinate_values, speed_values,
+                                        specified_values, constant_values),
+                        number=1000))
 
     with open(os.path.join(ROOT, 'data/example_constants.yml'), 'r') as f:
         constants_dict = yaml.load(f, Loader=yaml.SafeLoader)
@@ -70,6 +83,11 @@ def test_accelerations():
                                                       speed_values,
                                                       specified_values,
                                                       constants_dict)
+
+    print('Autolev evaluation time:',
+          timeit.timeit(lambda: autolev_rhs(coordinate_values, speed_values,
+                                            specified_values, constants_dict),
+                        number=1000))
 
     np.testing.assert_allclose(pydy_xdot[9:], accelerations)
     np.testing.assert_allclose(lam_xdot[9:], accelerations)
@@ -105,8 +123,9 @@ def test_with_control():
     np.testing.assert_allclose(pydy_xdot[:9], speed_values)
 
 
-def test_with_muscles(makeplot=False, makeanimate=False):
+def test_with_muscles(plot=False, animate=False):
     symbolics = derive.derive_equations_of_motion(include_muscles=True)
+    print(symbolics)
 
     # TODO : Move the construction of M and F into Symbolics.
     num_simple = len(symbolics.coordinates) + len(symbolics.activations)
@@ -128,7 +147,6 @@ def test_with_muscles(makeplot=False, makeanimate=False):
     M, F = sm.Matrix(M), sm.Matrix(F)
 
     print('Generating rhs function')
-    # NOTE: variable lists must be lists, not matrices for this function
     pydy_rhs = generate_ode_function(
         F,
         symbolics.coordinates + symbolics.activations,
@@ -171,20 +189,22 @@ def test_with_muscles(makeplot=False, makeanimate=False):
     #initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
     trajectories = odeint(pydy_rhs, initial_conditions, time_vector, args=args)
 
-    if makeplot or makeanimate:
+    if plot or animate:
         print('Generating the plot.')
-        scene, fig, ax = plot(symbolics, time_vector, initial_conditions,
-                              specified_values, constant_values)
+        import matplotlib.pyplot as plt
+        scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
+                                    specified_values, constant_values)
 
-    if makeplot and not makeanimate:
+    if plot and not animate:
         print('Showing the plot.')
         plt.show()
-    elif makeanimate:
+    elif animate:
         print('Generating the animation.')
         # NOTE : It is required to assign this to a variable if you want the
         # animation to run in the plot window.
-        ani = animate(scene, fig, time_vector, trajectories,
-                      np.zeros((len(time_vector), len(symbolics.specifieds))),
-                      np.array(list(constant_map.values())))
+        ani = utils.animate(scene, fig, time_vector, trajectories,
+                            np.zeros((len(time_vector),
+                                      len(symbolics.specifieds))),
+                            np.array(list(constant_map.values())))
         print('Showing the animation.')
         plt.show()
