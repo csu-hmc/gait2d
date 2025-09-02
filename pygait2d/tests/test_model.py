@@ -35,6 +35,10 @@ def test_accelerations():
         coordinate_derivatives=sm.Matrix(symbolics.speeds),
         specifieds=symbolics.specifieds,
         generator='cython',
+        # linear_sys_solve='sympy' is an undocumented option which calls
+        # LUsolve on the cse'd Ax=b system before solving it. It takes a bit
+        # longer to generate the function but results in fast evaluation.
+        linear_sys_solver='sympy',
         constants_arg_type='array',
         specifieds_arg_type='array',
     )
@@ -155,6 +159,10 @@ def test_with_muscles(plot=False, animate=False):
         mass_matrix=M,
         specifieds=symbolics.specifieds,
         generator='cython',
+        # linear_sys_solve='sympy' is an undocumented option which calls
+        # LUsolve on the cse'd Ax=b system before solving it. It takes a bit
+        # longer to generate the function but results in fast evaluation.
+        linear_sys_solver='sympy',
         constants_arg_type='array',
         specifieds_arg_type='array',
     )

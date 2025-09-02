@@ -50,7 +50,8 @@ class ExtensorPathway(me.PathwayBase):
         axis_point : Point
             Pin joint location fixed in both the parent and child.
         axis : Vector
-            Pin joint rotation axis.
+            Pin joint rotation axis, representing a positive rotation of B with
+            respect to A.
         parent_axis : Vector
             Axis fixed in the parent frame (A) that is directed from the pin
             joint point to the muscle origin point.
