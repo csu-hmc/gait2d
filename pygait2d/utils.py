@@ -190,7 +190,7 @@ def plot(sym, times, x, r, p):
         lfoot.heel,
         lfoot.toe,
         lshank.joint,
-    ], color="k", marker='.')
+    ], color="k", marker='.', markersize=12)
 
     if sym.muscles is not None:
         for i, mus in enumerate(sym.muscles):
