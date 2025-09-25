@@ -243,7 +243,8 @@ def generate_muscles(segments):
         point = me.Point(label)
         # point will be fixed on this segment:
         seg = get_segment_by_label(body_label)
-        x, y = sm.symbols(label + '_x, ' + label + '_y', real=True)
+        x, y, r = sm.symbols(label + '_x, ' + label + '_y, ' + label + '_r',
+                             real=True)
         # the muscle points are defined using the body fixed unit vectors for
         # the body that the point is fixed in
         if body_label == 'A':
@@ -255,7 +256,7 @@ def generate_muscles(segments):
         point.v2pt_theory(origin_point,
                           seg.inertial_frame,
                           seg.reference_frame)
-        return point, x, y
+        return point, x, y, r
 
     muscles = []
     mus_loads = []
@@ -265,21 +266,24 @@ def generate_muscles(segments):
         pathway_type = pathway_data[0]
         body_labels = pathway_data[1:]
 
-        origin_point, x, y = setup_point(mus_label, body_labels[0], 'origin')
+        origin_point, x, y, _ = setup_point(mus_label, body_labels[0],
+                                            'origin')
         mus_const += [x, y]
-        insert_point, x, y = setup_point(mus_label, body_labels[-1], 'insert')
+        insert_point, x, y, _ = setup_point(mus_label, body_labels[-1],
+                                            'insert')
         mus_const += [x, y]
 
         if pathway_type == 'Linear':
             pathway = me.LinearPathway(origin_point, insert_point)
         elif len(body_labels) > 2:
-            middle_point, x, y = setup_point(mus_label, body_labels[1],
-                                             'middle')
-            mus_const += [x, y]
+            middle_point, x, y, r = setup_point(mus_label, body_labels[1],
+                                                'middle')
             if pathway_type == 'Obstacle':
+                mus_const += [x, y]  # skip radius r
                 pathway = me.ObstacleSetPathway(origin_point, middle_point,
                                                 insert_point)
             elif pathway_type == 'Extensor':
+                mus_const += [x, y, r]
                 seg = get_segment_by_label(body_labels[-1])  # shin
                 pathway = ExtensorPathway(
                     origin_point,
@@ -288,8 +292,7 @@ def generate_muscles(segments):
                     seg.inertial_frame.z,
                     origin_point.pos_from(middle_point),
                     insert_point.pos_from(middle_point),
-                    # TODO : move radius to data file with values
-                    0.03,  # radius
+                    r,  # radius
                     # a negative knee angle flexes the knee (so switch sign)
                     -seg.generalized_coordinate_symbol)
 
