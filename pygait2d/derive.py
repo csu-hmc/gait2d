@@ -292,6 +292,10 @@ def generate_muscles(segments):
                     seg.inertial_frame.z,
                     origin_point.pos_from(middle_point),
                     insert_point.pos_from(middle_point),
+                    seg.parent_reference_frame.y,
+                    seg.parent_reference_frame.x,
+                    seg.reference_frame.y,
+                    seg.reference_frame.x,
                     r,  # radius
                     # a negative knee angle flexes the knee (so switch sign)
                     -seg.generalized_coordinate_symbol)

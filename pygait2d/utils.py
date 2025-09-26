@@ -35,8 +35,21 @@ def load_sympy_matrix(filename):
 
 
 class ExtensorPathway(me.PathwayBase):
-    def __init__(self, origin, insertion, axis_point, axis, parent_axis,
-                 child_axis, radius, coordinate):
+    def __init__(
+        self,
+        origin,
+        insertion,
+        axis_point,
+        axis,
+        parent_axis,
+        child_axis,
+        parent_shank_direction,
+        parent_shank_normal,
+        child_shank_direction,
+        child_shank_normal,
+        radius,
+        coordinate
+    ):
         """A custom pathway that wraps a circular arc around a pin joint.  This
         is intended to be used for extensor muscles. For example, a triceps
         wrapping around the elbow joint to extend the upper arm at the elbow.
@@ -74,13 +87,63 @@ class ExtensorPathway(me.PathwayBase):
         self.axis_point = axis_point
         self.axis = axis.normalize()
         self.parent_axis = parent_axis.normalize()
+        self.parent_shank_direction = parent_shank_direction
+        self.parent_shank_normal = parent_shank_normal
+        self.child_shank_direction = child_shank_direction
+        self.child_shank_normal = child_shank_normal
         self.child_axis = child_axis.normalize()
         self.radius = radius
         self.coordinate = coordinate
-        self.origin_distance = axis_point.pos_from(origin).magnitude()
-        self.insertion_distance = axis_point.pos_from(insertion).magnitude()
-        self.origin_angle = sm.asin(self.radius/self.origin_distance)
-        self.insertion_angle = sm.asin(self.radius/self.insertion_distance)
+        #self.origin_distance = axis_point.pos_from(origin).magnitude()
+        #self.insertion_distance = axis_point.pos_from(insertion).magnitude()
+        #self.origin_angle = sm.asin(self.radius/self.origin_distance)
+        #self.insertion_angle = sm.asin(self.radius/self.insertion_distance)
+
+    @property
+    def origin_angle(self):
+        r_PO_PA = self.origin.pos_from(self.axis_point)
+        y_plus_l = me.dot(r_PO_PA, self.parent_shank_direction)
+        x = me.dot(r_PO_PA, self.parent_shank_normal)
+        c = self.origin_distance
+        return sm.atan(x/y_plus_l) + sm.acos(self.radius/c) - sm.pi/2
+
+    @property
+    def origin_distance(self):
+        return self.origin.pos_from(self.axis_point).magnitude()
+
+    @property
+    def parent_tangency_point(self):
+        Aw = me.Point('Aw')  # fixed in parent
+        theta = self.origin_angle
+        Aw.set_pos(
+            self.axis_point,
+            self.radius*sm.cos(theta)*self.parent_shank_normal +
+            self.radius*sm.sin(theta)*self.parent_shank_direction,
+        )
+        return Aw
+
+    @property
+    def insertion_distance(self):
+        return self.insertion.pos_from(self.axis_point).magnitude()
+
+    @property
+    def insertion_angle(self):
+        r_PO_PA = self.insertion.pos_from(self.axis_point)
+        x = me.dot(r_PO_PA, self.child_shank_normal)
+        y_plus_l = me.dot(r_PO_PA, self.child_shank_direction)
+        c = self.insertion_distance
+        return sm.pi/2 - sm.atan(x/-y_plus_l) - sm.acos(self.radius/c)
+
+    @property
+    def child_tangency_point(self):
+        Bw = me.Point('Bw')  # fixed in child
+        theta = self.insertion_angle
+        Bw.set_pos(
+            self.axis_point,
+            self.radius*sm.cos(theta)*self.child_shank_normal +
+            -self.radius*sm.sin(theta)*self.child_shank_direction
+        )
+        return Bw
 
     @property
     def length(self):
@@ -113,20 +176,6 @@ class ExtensorPathway(me.PathwayBase):
         Forces applied to origin, insertion, and P from the muscle wrapped
         over circular arc of radius r.
         """
-        # TODO: generate these points on init
-        self.parent_tangency_point = me.Point('Aw')  # fixed in parent
-        self.child_tangency_point = me.Point('Bw')  # fixed in child
-        self.parent_tangency_point.set_pos(
-            self.axis_point,
-            self.radius*sm.cos(self.origin_angle)*self.parent_axis.cross(
-                self.axis)
-            + self.radius*sm.sin(self.origin_angle)*self.parent_axis,
-        )
-        self.child_tangency_point.set_pos(
-            self.axis_point,
-            -self.radius*sm.cos(self.insertion_angle)*self.child_axis.cross(
-                self.axis)
-            + self.radius*sm.sin(self.insertion_angle)*self.child_axis),
         parent_force_direction_vector = self.origin.pos_from(
             self.parent_tangency_point)
         child_force_direction_vector = self.insertion.pos_from(
@@ -192,6 +241,7 @@ def plot(sym, times, x, r, p):
         lshank.joint,
     ], color="k", marker='.', markersize=12)
 
+
     if sym.muscles is not None:
         for i, mus in enumerate(sym.muscles):
             color = "C{}".format(i)
@@ -210,7 +260,26 @@ def plot(sym, times, x, r, p):
 
     # adds CoM and unit vectors for each body segment
     for seg in sym.segments:
-        scene.add_body(seg.rigid_body)
+        seg_plot = scene.add_body(seg.rigid_body)
+
+        if seg.label in ['B', 'E']:
+            side = 'r' if seg.label == 'B' else 'l'
+            for c in sym.constants:
+                if c.name == f'rect_{side}_{seg.label}_middle_r':
+                    radius = c
+            seg_plot.attach_circle(
+                seg.joint,
+                radius,
+                seg.inertial_frame.z,
+                facecolor='black', alpha=0.2, edgecolor="black")
+            for c in sym.constants:
+                if c.name == f'vast_{side}_{seg.label}_middle_r':
+                    radius = c
+            seg_plot.attach_circle(
+                seg.joint,
+                radius,
+                seg.inertial_frame.z,
+                facecolor='black', alpha=0.2, edgecolor="black")
 
     # show ground reaction force vectors at the heels and toes, scaled to
     # visually reasonable length
