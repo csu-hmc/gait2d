@@ -30,6 +30,8 @@ def time_varying(sym_string):
 
 
 class BodySegment(object):
+    """Represents a 2D rigid body which has a rotation joint (origin joint) and
+    an attachment joint (joint)."""
 
     viz_sphere_radius = 0.07  # meters
     viz_cylinder_radius = 0.035  # meters
@@ -76,6 +78,14 @@ class BodySegment(object):
         self._create_rigid_body()
         self._joint_torque()
         self._gravity()
+
+    def __str__(self):
+        msg = (f'Segment: {self.description}\n'
+               f'    Reference frame: {self.label}\n'
+               f'    Parent reference frame: {self.parent_reference_frame}\n'
+               f'    Origin joint: {self.origin_joint}\n'
+               f'    Joint: {self.joint}')
+        return msg
 
     def _create_symbols(self):
         """Generates all of the SymPy symbols and functions of time
@@ -309,7 +319,7 @@ class FootSegment(BodySegment):
 
     def _locate_joint(self):
         """The foot has no joint."""
-        pass
+        self.joint = None
 
     def _locate_foot_points(self):
 
