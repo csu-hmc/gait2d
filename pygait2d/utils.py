@@ -50,36 +50,53 @@ class ExtensorPathway(me.PathwayBase):
         radius,
         coordinate
     ):
-        """A custom pathway that wraps a circular arc around a pin joint.  This
+        """A custom pathway that wraps a circular arc around a pin joint. This
         is intended to be used for extensor muscles. For example, a triceps
         wrapping around the elbow joint to extend the upper arm at the elbow.
 
         Parameters
         ==========
         origin : Point
-            Muscle origin point fixed on the parent body (A).
+            Muscle origin point.
         insertion : Point
-            Muscle insertion point fixed on the child body (B).
+            Muscle insertion point.
         axis_point : Point
             Pin joint location fixed in both the parent and child.
         axis : Vector
             Pin joint rotation axis, representing a positive rotation of B with
             respect to A.
         parent_axis : Vector
-            Axis fixed in the parent frame (A) that is directed from the pin
-            joint point to the muscle origin point.
+            Unit vector directed from the axis point to the muscle origin
+            point.
         child_axis : Vector
-            Axis fixed in the child frame (B) that is directed from the pin
-            joint point to the muscle insertion point.
+            Unit vector directed from the axis point to the muscle insertion
+            point.
         radius : sympyfiable
             Radius of the arc that the muscle wraps around.
+        parent_shank_direction : Vector
+            Unit vector from the axis point to a point fixed in the parent.
+            Should align with the child shank direction when the coordinate =
+            0.
+        parent_shank_normal : Vector
+            Unit vector fixed in the parent normal to parent shank direction.
+            Should align with the child shank normal when the coordinate = 0.
+        child_shank_direction : Vector
+            Unit vector from the axis point to a point fixed in the child.
+            Should align with the parent shank direction when the coordinate =
+            0.
+        child_shank_normal : Vector
+            Unit vector fixed in the child normal to child shank direction.
+            Should align with the child shank normal when the coordinate = 0.
         coordinate : sympfiable function of time
             Joint angle, zero when parent and child frames align. Positive
             rotation about the pin joint axis, B with respect to A.
 
         Notes
         =====
-        Only valid for coordinate >= 0.
+
+        - Parent reference frame A, Child reference frame B
+        - Only valid for coordinate >= 0.
+        - Only valid if wrapping circle's center is at the pin joint.
 
         """
         super().__init__(origin, insertion)
@@ -95,10 +112,6 @@ class ExtensorPathway(me.PathwayBase):
         self.child_axis = child_axis.normalize()
         self.radius = radius
         self.coordinate = coordinate
-        #self.origin_distance = axis_point.pos_from(origin).magnitude()
-        #self.insertion_distance = axis_point.pos_from(insertion).magnitude()
-        #self.origin_angle = sm.asin(self.radius/self.origin_distance)
-        #self.insertion_angle = sm.asin(self.radius/self.insertion_distance)
 
     @property
     def origin_angle(self):
@@ -153,12 +166,12 @@ class ExtensorPathway(me.PathwayBase):
         Length of two fixed length line segments and a changing arc length
         of a circle.
         """
-        angle = self.origin_angle + self.coordinate + self.insertion_angle
+        # TODO : If self.coordinate is negative this gives a weird result, we
+        # could return zero if self.coordinate is negative but that isn't
+        # differntiable.
+        angle = self.coordinate - self.origin_angle + self.insertion_angle
         arc_length = self.radius*angle
-        origin_segment_length = self.origin_distance*sm.cos(self.origin_angle)
-        insertion_segment_length = self.insertion_distance*sm.cos(
-            self.insertion_angle)
-        return origin_segment_length + arc_length + insertion_segment_length
+        return self.origin_distance + arc_length + self.insertion_distance
 
     @property
     def extension_velocity(self):
@@ -166,7 +179,7 @@ class ExtensorPathway(me.PathwayBase):
         Arc length of circle is the only thing that changes when the elbow
         flexes and extends.
         """
-        return self.radius*self.coordinate.diff(me.dynamicsymbols._t)
+        return self.length.diff(me.dynamicsymbols._t)
 
     @property
     def plot_points(self):
