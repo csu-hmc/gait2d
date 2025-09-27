@@ -103,10 +103,11 @@ class ExtensorPathway(me.PathwayBase):
     @property
     def origin_angle(self):
         r_PO_PA = self.origin.pos_from(self.axis_point)
-        y_plus_l = me.dot(r_PO_PA, self.parent_shank_direction)
         x = me.dot(r_PO_PA, self.parent_shank_normal)
         c = self.origin_distance
-        return sm.atan(x/y_plus_l) + sm.acos(self.radius/c) - sm.pi/2
+        alpha = sm.asin(x/c)
+        gamma = sm.acos(self.radius/c)
+        return alpha + gamma - sm.pi/2
 
     @property
     def origin_distance(self):
@@ -119,7 +120,7 @@ class ExtensorPathway(me.PathwayBase):
         Aw.set_pos(
             self.axis_point,
             self.radius*sm.cos(theta)*self.parent_shank_normal +
-            self.radius*sm.sin(theta)*self.parent_shank_direction,
+            -self.radius*sm.sin(theta)*self.parent_shank_direction,
         )
         return Aw
 
