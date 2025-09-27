@@ -312,7 +312,8 @@ def generate_muscles(segments):
 
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
-                               include_muscles=False):
+                               include_muscles=False,
+                               prevent_ground_penetration=True):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -328,6 +329,11 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     include_muscles : boolean, optional, default=False
         If true, muscle actuators will be included in addition to the joint
         torque actuators.
+    prevent_ground_penetration : boolean, optional
+        If true, the ground force will be added to all joint centers as well as
+        the feet to prevent the model from penetrating the ground at all. This
+        matches the behavior of the Autolev model. Otherwise, the force will
+        only be applied to the feet bottoms.
 
     Returns
     =======
@@ -414,9 +420,10 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
                                             contact_force(segment.toe,
                                                           ground, origin)))
         else:
-            external_forces_torques.append((segment.joint,
-                                            contact_force(segment.joint,
-                                                          ground, origin)))
+            if prevent_ground_penetration:
+                external_forces_torques.append((segment.joint,
+                                                contact_force(segment.joint,
+                                                              ground, origin)))
 
         # bodies
         bodies.append(segment.rigid_body)
@@ -433,10 +440,11 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
                                         contact_force(segments[0].joint,
                                                       ground, seat_level)))
 
-    # add contact force for trunk mass center.
-    external_forces_torques.append((segments[0].mass_center,
-                                    contact_force(segments[0].mass_center,
-                                                  ground, origin)))
+    if prevent_ground_penetration:
+        # add contact force for trunk mass center.
+        external_forces_torques.append((segments[0].mass_center,
+                                        contact_force(segments[0].mass_center,
+                                                      ground, origin)))
     # add hand of god
     # TODO : move this into segment.py
     trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
