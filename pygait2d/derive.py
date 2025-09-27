@@ -313,7 +313,7 @@ def generate_muscles(segments):
 
 def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
                                include_muscles=False,
-                               prevent_ground_penetration=False):
+                               prevent_ground_penetration=True):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -331,8 +331,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         torque actuators.
     prevent_ground_penetration : boolean, optional
         If true, the ground force will be added to all joint centers as well as
-        the feet to prevent the model from penetrating the ground at all.
-        Otherwise, the force will only be applied to the feet bottoms.
+        the feet to prevent the model from penetrating the ground at all. This
+        matches the behavior of the Autolev model. Otherwise, the force will
+        only be applied to the feet bottoms.
 
     Returns
     =======
