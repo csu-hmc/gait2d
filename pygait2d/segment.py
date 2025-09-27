@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # external libraries
-from sympy import symbols, exp, acos, pi, Function, Abs
+from sympy import symbols, exp, acos, pi, Function, Abs, S
 import sympy.physics.mechanics as me
 from pydy.viz import VisualizationFrame, Cylinder, Sphere
 
@@ -425,7 +425,7 @@ class FootSegment(BodySegment):
         return viz_frames
 
 
-def contact_force(point, ground, origin):
+def contact_force(point, ground, origin, belt_speed=S(0)):
     """Returns a contact force vector acting on the given point made of
     friction along the contact surface and elastic force in the vertical
     direction.
@@ -439,6 +439,9 @@ def contact_force(point, ground, origin):
         The x axis defines the ground line and positive y is up.
     origin : sympy.physics.mechanics.Point
         An origin point located on the ground line.
+    belt_speed : sympifiable, i.e. Symbol, Function(), number, etc.
+        A variable or value that represents the possibly time varying belt
+        speed for treadmill walking.
 
     Returns
     =======
@@ -472,8 +475,9 @@ def contact_force(point, ground, origin):
     vertical_force = (contact_stiffness * penetration ** 3 - y_location) * \
         (1 - contact_damping * velocity.dot(ground.y))
 
-    friction = -contact_friction_coefficient * vertical_force * \
-        ((2 / (1 + exp(-velocity.dot(ground.x) /
-                       friction_scaling_factor))) - 1)
+    # Friction force depends on velocity of the contact point relative to the
+    # treadmill belt (which is moving backwards).
+    friction = (-contact_friction_coefficient*vertical_force*((2/(1 + exp(
+        (-belt_speed - velocity.dot(ground.x))/friction_scaling_factor))) - 1))
 
     return friction * ground.x + vertical_force * ground.y

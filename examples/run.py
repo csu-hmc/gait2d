@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from pygait2d import derive, simulate
 from pygait2d import utils
 
-symbolics = derive.derive_equations_of_motion()
+symbolics = derive.derive_equations_of_motion(treadmill=True)
 
 constant_values = simulate.load_constants(
     symbolics.constants, os.path.join(os.path.dirname(__file__), '..',
@@ -33,8 +33,10 @@ rhs = generate_ode_function(
     specifieds_arg_type='array',
 )
 
-args = (np.zeros(len(symbolics.specifieds)),
-        np.array(list(constant_values.values())))
+specifieds_vals = np.zeros(len(symbolics.specifieds))
+specifieds_vals[-1] = 1.0
+
+args = (specifieds_vals, np.array(list(constant_values.values())))
 
 time_vector = np.linspace(0.0, 2.0, num=1000)
 initial_conditions = np.zeros(len(symbolics.states))

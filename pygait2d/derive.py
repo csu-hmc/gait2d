@@ -311,9 +311,13 @@ def generate_muscles(segments):
     return mus_loads, mus_excit, mus_const, muscles
 
 
-def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
-                               include_muscles=False,
-                               prevent_ground_penetration=True):
+def derive_equations_of_motion(
+    seat_force=False,
+    gait_cycle_control=False,
+    include_muscles=False,
+    prevent_ground_penetration=True,
+    treadmill=False,
+):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
     frames, inertial reference frame, and origin point.
@@ -334,6 +338,9 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
         the feet to prevent the model from penetrating the ground at all. This
         matches the behavior of the Autolev model. Otherwise, the force will
         only be applied to the feet bottoms.
+    treadmill : boolean, optional
+        If true, a time varying treadmill speed will be included in the contact
+        force calculation.
 
     Returns
     =======
@@ -365,6 +372,11 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
     external_forces_torques = []
     bodies = []
     visualization_frames = []
+
+    if treadmill:
+        belt_speed = time_varying('v')
+    else:
+        belt_speed = sm.S(0)
 
     for label in sorted(segment_descriptions.keys()):
 
@@ -413,17 +425,18 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
 
         # contact force
         if label == 'D' or label == 'G':  # foot
-            external_forces_torques.append((segment.heel,
-                                            contact_force(segment.heel,
-                                                          ground, origin)))
-            external_forces_torques.append((segment.toe,
-                                            contact_force(segment.toe,
-                                                          ground, origin)))
+            external_forces_torques.append(
+                (segment.heel, contact_force(segment.heel, ground, origin,
+                                             belt_speed=belt_speed)))
+            external_forces_torques.append(
+                (segment.toe, contact_force(segment.toe, ground, origin,
+                                            belt_speed=belt_speed)))
         else:
             if prevent_ground_penetration:
-                external_forces_torques.append((segment.joint,
-                                                contact_force(segment.joint,
-                                                              ground, origin)))
+                external_forces_torques.append(
+                    (segment.joint, contact_force(segment.joint, ground,
+                                                  origin,
+                                                  belt_speed=belt_speed)))
 
         # bodies
         bodies.append(segment.rigid_body)
@@ -438,19 +451,24 @@ def derive_equations_of_motion(seat_force=False, gait_cycle_control=False,
                      segments[3].foot_depth)*ground.y)
         external_forces_torques.append((segments[0].joint,
                                         contact_force(segments[0].joint,
-                                                      ground, seat_level)))
+                                                      ground, seat_level,
+                                                      belt_speed=belt_speed)))
 
     if prevent_ground_penetration:
         # add contact force for trunk mass center.
-        external_forces_torques.append((segments[0].mass_center,
-                                        contact_force(segments[0].mass_center,
-                                                      ground, origin)))
+        external_forces_torques.append(
+            (segments[0].mass_center, contact_force(segments[0].mass_center,
+                                                    ground, origin,
+                                                    belt_speed=belt_speed)))
     # add hand of god
     # TODO : move this into segment.py
     trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
     specified = [trunk_force_x, trunk_force_y] + specified
     external_forces_torques.append((segments[0].mass_center, trunk_force_x *
                                     ground.x + trunk_force_y * ground.y))
+
+    if treadmill:  # v is last
+        specified.append(belt_speed)
 
     # add contact model constants
     # TODO : these should be grabbed from the segments, not recreated.
