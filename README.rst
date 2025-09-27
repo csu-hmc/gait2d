@@ -120,8 +120,10 @@ Rigid bodies and constants
   - ``ilio_r_B_insert_y``: local y location of insertion wrt to the hip joint [m]
   - ``rect_r_B_middle_x``: local x location of middle wrt to the hip joint [m]
   - ``rect_r_B_middle_y``: local y location of middle wrt to the hip joint [m]
+  - ``rect_r_B_middle_r``: radius of knee wrapping circle [m]
   - ``vast_r_B_middle_x``: local x location of middle wrt to the hip joint [m]
   - ``vast_r_B_middle_y``: local y location of middle wrt to the hip joint [m]
+  - ``vast_r_B_middle_r``: radius of knee wrapping circle [m]
   - ``vast_r_B_origin_x``: local x location of origin wrt to the hip joint [m]
   - ``vast_r_B_origin_y``: local y location of origin wrt to the hip joint [m]
 
@@ -181,8 +183,10 @@ Rigid bodies and constants
   - ``ilio_l_E_insert_y``: local y location of insertion wrt to the hip joint [m]
   - ``rect_l_E_middle_x``: local x location of middle wrt to the hip joint [m]
   - ``rect_l_E_middle_y``: local y location of middle wrt to the hip joint [m]
+  - ``rect_l_E_middle_r``: radius of knee wrapping circle [m]
   - ``vast_l_E_middle_x``: local x location of middle wrt to the hip joint [m]
   - ``vast_l_E_middle_y``: local y location of middle wrt to the hip joint [m]
+  - ``vast_l_E_middle_r``: radius of knee wrapping circle [m]
   - ``vast_l_E_origin_x``: local x location of origin wrt to the hip joint [m]
   - ``vast_l_E_origin_y``: local y location of origin wrt to the hip joint [m]
 
