@@ -131,6 +131,32 @@ def test_with_muscles(plot=False, animate=False):
     symbolics = derive.derive_equations_of_motion(include_muscles=True)
     print(symbolics)
 
+    coordinate_values = np.random.random(len(symbolics.coordinates))
+    muscle_values = np.random.random(len(symbolics.activations))
+    speed_values = np.random.random(len(symbolics.speeds))
+    specified_values = np.random.random(len(symbolics.specifieds))
+
+    constant_map = simulate.load_constants(
+        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
+    constant_values = np.array(list(constant_map.values()))
+
+    time_vector = np.linspace(0.0, 0.5, num=100)
+
+    initial_conditions = np.zeros(len(symbolics.states))
+    initial_conditions[1] = 1.0  # set hip above ground
+    #initial_conditions[3] = np.deg2rad(120.0)  # right hip angle
+    #initial_conditions[4] = -np.deg2rad(90.0)  # right knee angle
+    #initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
+    #initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
+    #initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
+    #initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
+
+    if plot or animate:
+        print('Generating the plot.')
+        import matplotlib.pyplot as plt
+        scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
+                                    specified_values, constant_values)
+
     # TODO : Move the construction of M and F into Symbolics.
     num_simple = len(symbolics.coordinates) + len(symbolics.activations)
     num_dyn = len(symbolics.speeds)
@@ -167,14 +193,6 @@ def test_with_muscles(plot=False, animate=False):
         specifieds_arg_type='array',
     )
 
-    coordinate_values = np.random.random(len(symbolics.coordinates))
-    muscle_values = np.random.random(len(symbolics.activations))
-    speed_values = np.random.random(len(symbolics.speeds))
-    specified_values = np.random.random(len(symbolics.specifieds))
-
-    constant_map = simulate.load_constants(
-        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
-    constant_values = np.array(list(constant_map.values()))
     args = (specified_values, constant_values)
 
     x = np.hstack((coordinate_values, muscle_values, speed_values))
@@ -186,22 +204,7 @@ def test_with_muscles(plot=False, animate=False):
     args = (np.zeros(len(symbolics.specifieds)),
             np.array(list(constant_map.values())))
 
-    time_vector = np.linspace(0.0, 0.5, num=100)
-    initial_conditions = np.zeros(len(symbolics.states))
-    initial_conditions[1] = 1.0  # set hip above ground
-    initial_conditions[3] = np.deg2rad(120.0)  # right hip angle
-    initial_conditions[4] = -np.deg2rad(90.0)  # right knee angle
-    #initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
-    #initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
-    #initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
-    #initial_conditions[8] = -np.deg2rad(25.0)  # left ankle angle
     trajectories = odeint(pydy_rhs, initial_conditions, time_vector, args=args)
-
-    if plot or animate:
-        print('Generating the plot.')
-        import matplotlib.pyplot as plt
-        scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
-                                    specified_values, constant_values)
 
     if plot and not animate:
         print('Showing the plot.')
