@@ -189,8 +189,8 @@ def test_with_muscles(plot=False, animate=False):
     time_vector = np.linspace(0.0, 0.5, num=100)
     initial_conditions = np.zeros(len(symbolics.states))
     initial_conditions[1] = 1.0  # set hip above ground
-    #initial_conditions[3] = np.deg2rad(40.0)  # right hip angle
-    #initial_conditions[4] = -np.deg2rad(120.0)  # right knee angle
+    initial_conditions[3] = np.deg2rad(120.0)  # right hip angle
+    initial_conditions[4] = -np.deg2rad(90.0)  # right knee angle
     #initial_conditions[5] = -np.deg2rad(25.0)  # right ankle angle
     #initial_conditions[6] = -np.deg2rad(40.0)  # left hip angle
     #initial_conditions[7] = -np.deg2rad(60.0)  # left knee angle
