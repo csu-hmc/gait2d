@@ -277,24 +277,25 @@ def plot(sym, times, x, r, p):
     for seg in sym.segments:
         seg_plot = scene.add_body(seg.rigid_body)
 
-        if seg.label in ['B', 'E']:
-            side = 'r' if seg.label == 'B' else 'l'
-            for c in sym.constants:
-                if c.name == f'rect_{side}_{seg.label}_middle_r':
-                    radius = c
-            seg_plot.attach_circle(
-                seg.joint,
-                radius,
-                seg.inertial_frame.z,
-                facecolor='black', alpha=0.2, edgecolor="black")
-            for c in sym.constants:
-                if c.name == f'vast_{side}_{seg.label}_middle_r':
-                    radius = c
-            seg_plot.attach_circle(
-                seg.joint,
-                radius,
-                seg.inertial_frame.z,
-                facecolor='black', alpha=0.2, edgecolor="black")
+        if sym.muscles is not None:
+            if seg.label in ['B', 'E']:
+                side = 'r' if seg.label == 'B' else 'l'
+                for c in sym.constants:
+                    if c.name == f'rect_{side}_{seg.label}_middle_r':
+                        radius = c
+                seg_plot.attach_circle(
+                    seg.joint,
+                    radius,
+                    seg.inertial_frame.z,
+                    facecolor='black', alpha=0.2, edgecolor="black")
+                for c in sym.constants:
+                    if c.name == f'vast_{side}_{seg.label}_middle_r':
+                        radius = c
+                seg_plot.attach_circle(
+                    seg.joint,
+                    radius,
+                    seg.inertial_frame.z,
+                    facecolor='black', alpha=0.2, edgecolor="black")
 
     # show ground reaction force vectors at the heels and toes, scaled to
     # visually reasonable length

@@ -13,7 +13,7 @@ from pydy.viz import Scene
 import matplotlib.pyplot as plt
 
 from pygait2d import derive, simulate
-from pygait2d.utils import generate_animation
+from pygait2d import utils
 
 symbolics = derive.derive_equations_of_motion()
 
@@ -43,12 +43,11 @@ initial_conditions[3] = np.deg2rad(5.0)  # right hip angle
 initial_conditions[6] = -np.deg2rad(5.0)  # left hip angle
 trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 
-ani = generate_animation(symbolics,
-                         time_vector,
-                         trajectories,
-                         np.zeros((len(time_vector),
-                                   len(symbolics.specifieds))),
-                         np.array(list(constant_values.values())))
+scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
+                            args[0], args[1])
+ani = utils.animate(scene, fig, time_vector, trajectories,
+                    np.zeros((len(time_vector), len(symbolics.specifieds))),
+                    args[1])
 
 plt.show()
 
