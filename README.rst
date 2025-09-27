@@ -363,6 +363,7 @@ Specified inputs
 - ``Te``: hip joint torque, ``Te>0`` extends the hip
 - ``Tf``: knee joint torque, ``Tf>0`` abducts the knee
 - ``Tg``: ankle joint torque, ``Tg>0`` plantarflexes the foot
+- ``v`` : treadmill belt speed
 - ``e_ilio_r``: muscle excitation
 - ``e_hams_r``: muscle excitation
 - ``e_glut_r``: muscle excitation
