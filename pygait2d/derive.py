@@ -317,6 +317,7 @@ def derive_equations_of_motion(
     include_muscles=False,
     prevent_ground_penetration=True,
     treadmill=False,
+    hand_of_god=True,
 ):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
@@ -341,11 +342,26 @@ def derive_equations_of_motion(
     treadmill : boolean, optional
         If true, a time varying treadmill speed will be included in the contact
         force calculation.
+    hand_of_god : boolean, optional
+        If true, a two component specified force acting on the mass center of
+        the torso and a torque acting on the torso will be included.
 
     Returns
     =======
     symbolics: Symbolics
         Contains all symbolic model components, see :py:class:`Symbolics`.
+
+    Notes
+    =====
+
+    Order of time varying variables:
+
+    - coordinates: qax, qay, qa, qb, qc, qd, qe, qf, qg
+    - speeds: uax, uay, ua, ub, uc, ud, ue, uf, ug
+    - specifieds: [Fax, Fay, Ta], Tb, Tc, Td, Te, Tf, Tg, [v]
+
+    [Fax, Fay, Ta] and [v] are included only if hand_of_god and treadmill are
+    true, respectively.
 
     """
 
@@ -417,11 +433,14 @@ def derive_equations_of_motion(
                                         segment.gravity))
 
         # joint torques
-        external_forces_torques.append((segment.reference_frame,
-                                        segment.torque))
-        external_forces_torques.append((segment.parent_reference_frame,
-                                        -segment.torque))
-        specified.append(segment.joint_torque_symbol)
+        if label == 'A' and not hand_of_god:
+            pass
+        else:
+            specified.append(segment.joint_torque_symbol)
+            external_forces_torques.append((segment.reference_frame,
+                                            segment.torque))
+            external_forces_torques.append((segment.parent_reference_frame,
+                                            -segment.torque))
 
         # contact force
         if label == 'D' or label == 'G':  # foot
@@ -460,12 +479,14 @@ def derive_equations_of_motion(
             (segments[0].mass_center, contact_force(segments[0].mass_center,
                                                     ground, origin,
                                                     belt_speed=belt_speed)))
-    # add hand of god
-    # TODO : move this into segment.py
-    trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
-    specified = [trunk_force_x, trunk_force_y] + specified
-    external_forces_torques.append((segments[0].mass_center, trunk_force_x *
-                                    ground.x + trunk_force_y * ground.y))
+    if hand_of_god:
+        # add hand of god
+        # TODO : move this into segment.py
+        trunk_force_x, trunk_force_y = time_varying('Fax, Fay')
+        specified = [trunk_force_x, trunk_force_y] + specified
+        external_forces_torques.append((
+            segments[0].mass_center, trunk_force_x*ground.x +
+            trunk_force_y*ground.y))
 
     if treadmill:  # v is last
         specified.append(belt_speed)
