@@ -46,16 +46,16 @@ Import all necessary modules, functions, and classes:
 """
 import os
 import logging
-from pkg_resources import parse_version
-from opty import Problem
-from pygait2d import derive, simulate
-from pygait2d.segment import time_symbol, contact_force
-from symmeplot.matplotlib import Scene3D
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+
 import numpy as np
 import sympy as sm
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from opty import Problem
+from symmeplot.matplotlib import Scene3D
+
+from pygait2d import derive, simulate
+from pygait2d.segment import time_symbol, contact_force
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -118,8 +118,7 @@ duration = (static_num_nodes - 1)*h
 
 speed = sm.symbols('v', real=True)
 par_map[speed] = 0.0
-#g = symbolics.constants[0]
-#par_map[g] = 1.625
+
 # %%
 # Bound all the states to human realizable ranges.
 #
@@ -325,14 +324,9 @@ def animate():
     ], color="k")
 
     # creates a moving ground (many points to deal with matplotlib limitation)
-    if parse_version(matplotlib.__version__) >= parse_version('3.10'):
-        scene.add_line([origin.locatenew('gl', s*ground.x) for s in
-                        np.linspace(-2.0, 2.0)], linestyle='--',
-                       color='tab:green', axlim_clip=True)
-    else:
-        scene.add_line([origin.locatenew('gl', s*ground.x) for s in
-                        np.linspace(-2.0, 2.0)], linestyle='--',
-                       color='tab:green')
+    scene.add_line([origin.locatenew('gl', s*ground.x) for s in
+                    np.linspace(-2.0, 2.0)], linestyle='--', color='tab:green',
+                   axlim_clip=True)
 
     # adds CoM and unit vectors for each body segment
     for seg in symbolics.segments:
