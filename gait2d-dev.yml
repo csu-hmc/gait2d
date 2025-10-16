@@ -16,6 +16,7 @@ dependencies:
   - sympy
   # examples
   - scipy
+  - ipopt
   - pip:
     - git+https://github.com/csu-hmc/opty#egg=opty
   # dev
