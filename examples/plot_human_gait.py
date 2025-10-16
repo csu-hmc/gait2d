@@ -65,6 +65,7 @@ root.setLevel(logging.INFO)
 symbolics = derive.derive_equations_of_motion(
     prevent_ground_penetration=False,
     hand_of_god=False,
+    include_muscles=True,
 )
 
 eom = symbolics.equations_of_motion
@@ -99,7 +100,7 @@ num_states = len(states)
 # Each joint has a joint torque acting between the adjacent bodies.
 qax, qay, qa, qb, qc, qd, qe, qf, qg = symbolics.coordinates
 uax, uay, ua, ub, uc, ud, ue, uf, ug = symbolics.speeds
-Tb, Tc, Td, Te, Tf, Tg = symbolics.specifieds
+Tb, Tc, Td, Te, Tf, Tg = symbolics.specifieds[:6]
 
 # %%
 # The constants are loaded from a file of realistic geometry, mass, inertia,
@@ -150,9 +151,10 @@ bounds.update({k: (-np.deg2rad(30.0), np.deg2rad(30.0))
 # all rotational speeds
 bounds.update({k: (-np.deg2rad(400.0), np.deg2rad(400.0))
                for k in [ua, ub, uc, ud, ue, uf, ug]})
-# all joint torques
-bounds.update({k: (-100.0, 100.0)
-               for k in [Tb, Tc, Td, Te, Tf, Tg]})
+# all specified excitations
+bounds.update({k: (0.0, 1.0) for k in symbolics.activations})
+# all specified excitations
+bounds.update({k: (0.0, 1.0) for k in symbolics.excitations})
 
 # %%
 # The average speed can be fixed by constraining the total distance traveled.
@@ -185,24 +187,25 @@ instance_constraints = (
 
 
 # %%
-# The objective is to minimize the mean of all joint torques.
+# The objective is to minimize the mean of all activations.
 def obj(prob, free):
     """Minimize the sum of the squares of the control torques."""
-    _, r, _, h = prob.parse_free(free)
-    T = r.flatten()
-    return h*np.sum(T**2)
+    x, _, _, h = prob.parse_free(free)
+    activations = x[18:18 + 16, :].flatten()
+    return h*np.sum(activations**2)
 
 
 def obj_grad(prob, free):
-    _, r, _, h = prob.parse_free(free)
-    T = r.flatten()
+    x, _, _, h = prob.parse_free(free)
+    activations = x[18:18 + 16, :].flatten()
     grad = np.zeros_like(free)
-    n = prob.collocator.num_states
     N = prob.collocator.num_collocation_nodes
-    grad[n*N:-1] = 2.0*h*T
-    grad[-1] = np.sum(T**2)
+    grad[18*N:(18 + 16)*N] = 2.0*h*activations
+    grad[-1] = np.sum(activations**2)
     return grad
 
+
+traj_map = {k: np.zeros(static_num_nodes) for k in symbolics.specifieds[:6]}
 
 # %%
 # Create an optimization problem and solve it.
@@ -215,6 +218,7 @@ prob = Problem(
     static_num_nodes,
     h,
     known_parameter_map=par_map,
+    known_trajectory_map=traj_map,
     instance_constraints=instance_constraints,
     bounds=bounds,
     time_symbol=time_symbol,
@@ -235,11 +239,11 @@ initial_guess[-1] = 0.01
 solution, info = prob.solve(initial_guess)
 
 xs, rs, _, h_val = prob.parse_free(solution)
-num_nodes = 50
+num_nodes = 80
 x_rep = np.repeat(xs[:, 0:1], num_nodes, axis=1)
 r_rep = np.repeat(rs[:, 0:1], num_nodes, axis=1)
 initial_guess = np.hstack((x_rep.flatten(), r_rep.flatten(), 0.01))
-#initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
+initial_guess += np.random.normal(0.0, 0.001, size=initial_guess.shape)
 
 logging.info('Instantiating the opty problem: walking')
 # TODO : It would be nice if we could update the number of nodes and the
@@ -267,6 +271,7 @@ instance_constraints = (
     uf.func(0*h) - uc.func(duration),
     ug.func(0*h) - ud.func(duration),
 )
+traj_map = {k: np.zeros(num_nodes) for k in symbolics.specifieds[:6]}
 prob = Problem(
     obj,
     obj_grad,
@@ -275,6 +280,7 @@ prob = Problem(
     num_nodes,
     h,
     known_parameter_map=par_map,
+    known_trajectory_map=traj_map,
     instance_constraints=instance_constraints,
     bounds=bounds,
     time_symbol=time_symbol,
@@ -282,7 +288,7 @@ prob = Problem(
 )
 
 solution = initial_guess
-for new_speed in np.linspace(0.01, 1.3, num=8):
+for new_speed in np.linspace(0.01, 0.8, num=8):
     par_map[speed] = new_speed
     logging.info(f"Running optimization for walking speed: "
                  f"{prob.collocator.known_parameter_map[speed]}")
@@ -345,10 +351,14 @@ def animate():
     scene.add_vector(contact_force(lfoot.heel, ground, origin)/600.0,
                      lfoot.heel, color="tab:blue")
 
-    del par_map[speed]
+    try:
+        del par_map[speed]
+    except:
+        pass
     scene.lambdify_system(states + symbolics.specifieds + symbolics.constants)
     gait_cycle = np.vstack((
         xs,  # q, u shape(2n, N)
+        np.zeros((6, len(times))),  # joint torques
         rs,  # r, shape(q, N)
         np.repeat(np.atleast_2d(np.array(list(par_map.values()))).T,
                   len(times), axis=1),  # p, shape(r, N)
