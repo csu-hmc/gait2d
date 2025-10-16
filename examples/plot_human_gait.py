@@ -112,10 +112,12 @@ par_map
 # %%
 # Pick an average ambulation speed and the number of discretization nodes for
 # the half period and define the time step as a variable :math:`h`.
-static_num_nodes = 2
 h = sm.symbols('h', real=True, positive=True)
+
+static_num_nodes = 2
 duration = (static_num_nodes - 1)*h
 
+# TODO : Could use the treadmill speed option in EoMs to provide this.
 speed = sm.symbols('v', real=True)
 par_map[speed] = 0.0
 
@@ -233,7 +235,7 @@ initial_guess[-1] = 0.01
 solution, info = prob.solve(initial_guess)
 
 xs, rs, _, h_val = prob.parse_free(solution)
-num_nodes = 100
+num_nodes = 50
 x_rep = np.repeat(xs[:, 0:1], num_nodes, axis=1)
 r_rep = np.repeat(rs[:, 0:1], num_nodes, axis=1)
 initial_guess = np.hstack((x_rep.flatten(), r_rep.flatten(), 0.01))
