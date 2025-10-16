@@ -24,6 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           environment-file: gait2d-dev.yml
+          miniforge-version: latest
       - name: install and run tests
         shell: bash -l {0}
         run: |
