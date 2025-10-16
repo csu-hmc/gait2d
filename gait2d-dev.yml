@@ -14,9 +14,12 @@ dependencies:
   - pyyaml
   - symmeplot
   - sympy
-  # examples
-  - scipy
   # dev
   - ipython
   - jupyter
   - pytest
+  # examples
+  - scipy
+  - cyipopt
+  - pip:
+    - git+https://github.com/csu-hmc/opty#egg=opty
