@@ -9,7 +9,6 @@ gait2de
    :members:
    :inherited-members:
 
-
 derive
 ======
 
