@@ -130,7 +130,7 @@ par_map[speed] = 0.0
 # - Put a maximum on the peak torque values.
 
 bounds = {
-    h: (0.0001, 0.1),
+    h: (0.005, 0.1),
     delt: (0.0, 10.0),
     qax: (0.0, 10.0),
     qay: (0.5, 1.5),
@@ -189,7 +189,7 @@ instance_constraints = (
 def obj(prob, free):
     """Minimize the sum of the squares of the control torques."""
     _, r, _, h = prob.parse_free(free)
-    T = r.flatten()
+    T = r.flatten()  # all torques
     return h*np.sum(T**2)
 
 
