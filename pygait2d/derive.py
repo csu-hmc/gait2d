@@ -15,6 +15,8 @@ from .segment import (BodySegment, TrunkSegment, FootSegment, contact_force,
                       time_varying, time_symbol)
 from .utils import ExtensorPathway
 
+logger = logging.getLogger(__name__)
+
 me.dynamicsymbols._t = time_symbol
 
 
@@ -177,7 +179,7 @@ def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
     # We can just go through the final equations of motion and replace the
     # joint torques Tb through Tg with Tb -> Tb + kb_qb*(qb_des - qb) +
     # kb_ub*(ub_des - qb) + ...
-    logging.info('Generating gait cycle torque controller.')
+    logger.info('Generating gait cycle torque controller.')
     K = []
     for ri in specified:
         row = []
@@ -208,7 +210,7 @@ def generate_muscles(segments):
     """Returns the loads due to the musculotendon actuators and the activation
     dynamics differential equations."""
 
-    logging.info('Generating musculotendon pathways and activation dynamics.')
+    logger.info('Generating musculotendon pathways and activation dynamics.')
 
     # The Pathway type followed by the origin, (middle,) inersetion bodies
     muscle_descriptions = {
@@ -366,7 +368,7 @@ def derive_equations_of_motion(
 
     """
 
-    logging.info('Forming positions, velocities, accelerations and forces.')
+    logger.info('Forming positions, velocities, accelerations and forces.')
     # reference frame label: Segment, segment name, distal joint name
     segment_descriptions = {'A': (TrunkSegment, 'Trunk', 'Hip'),
                             'B': (BodySegment, 'Right Thigh', 'Right Knee'),
@@ -503,9 +505,9 @@ def derive_equations_of_motion(
         constants += mus_con
 
     # equations of motion
-    logging.info("Initializing Kane's Method.")
+    logger.info("Initializing Kane's Method.")
     kane = me.KanesMethod(ground, coordinates, speeds, kinematic_equations)
-    logging.info("Forming Kane's Equations.")
+    logger.info("Forming Kane's Equations.")
     fr, frstar = kane.kanes_equations(bodies, loads=external_forces_torques)
 
     if gait_cycle_control:
