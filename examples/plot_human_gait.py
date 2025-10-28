@@ -57,8 +57,9 @@ from symmeplot.matplotlib import Scene3D
 from pygait2d import derive, simulate
 from pygait2d.segment import time_symbol, contact_force
 
-root = logging.getLogger()
-root.setLevel(logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logging.info('test')
 
 # %%
 # Derive the equations of motion using gait2d.
@@ -67,11 +68,10 @@ symbolics = derive.derive_equations_of_motion(
     hand_of_god=False,
 )
 
-eom = symbolics.equations_of_motion
-
 # %%
 # The equations of motion have this many mathematical operations:
-sm.count_ops(symbolics.equations_of_motion)
+eom = symbolics.equations_of_motion
+sm.count_ops(eom)
 
 # %%
 # :math:`t_f - t_0` needs to be available to compute the average speed in the
@@ -117,7 +117,6 @@ h = sm.symbols('h', real=True, positive=True)
 static_num_nodes = 2
 duration = (static_num_nodes - 1)*h
 
-# TODO : Could use the treadmill speed option in EoMs to provide this.
 speed = sm.symbols('v', real=True)
 par_map[speed] = 0.0
 
@@ -151,7 +150,7 @@ bounds.update({k: (-np.deg2rad(30.0), np.deg2rad(30.0))
 bounds.update({k: (-np.deg2rad(400.0), np.deg2rad(400.0))
                for k in [ua, ub, uc, ud, ue, uf, ug]})
 # all joint torques
-bounds.update({k: (-100.0, 100.0)
+bounds.update({k: (-600.0, 600.0)
                for k in [Tb, Tc, Td, Te, Tf, Tg]})
 
 # %%
@@ -206,7 +205,7 @@ def obj_grad(prob, free):
 
 # %%
 # Create an optimization problem and solve it.
-logging.info('Instantiating the opty problem: static')
+logger.info('Instantiating the opty problem: static')
 prob = Problem(
     obj,
     obj_grad,
@@ -218,6 +217,8 @@ prob = Problem(
     instance_constraints=instance_constraints,
     bounds=bounds,
     time_symbol=time_symbol,
+    parallel=True,
+    tmp_dir='codegen',
 )
 
 # %%
@@ -239,9 +240,9 @@ num_nodes = 50
 x_rep = np.repeat(xs[:, 0:1], num_nodes, axis=1)
 r_rep = np.repeat(rs[:, 0:1], num_nodes, axis=1)
 initial_guess = np.hstack((x_rep.flatten(), r_rep.flatten(), 0.01))
-#initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
+initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
 
-logging.info('Instantiating the opty problem: walking')
+logger.info('Instantiating the opty problem: walking')
 # TODO : It would be nice if we could update the number of nodes and the
 # instance constraints without creating a new problem.
 duration = (num_nodes - 1)*h
@@ -279,13 +280,14 @@ prob = Problem(
     bounds=bounds,
     time_symbol=time_symbol,
     parallel=True,
+    tmp_dir='codegen',
 )
 
 solution = initial_guess
 for new_speed in np.linspace(0.01, 1.3, num=8):
     par_map[speed] = new_speed
-    logging.info(f"Running optimization for walking speed: "
-                 f"{prob.collocator.known_parameter_map[speed]}")
+    logger.info(f"Running optimization for walking speed: "
+                f"{prob.collocator.known_parameter_map[speed]}")
     solution, info = prob.solve(solution)
 
 # %%
