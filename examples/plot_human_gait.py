@@ -1,15 +1,12 @@
 r"""
-Human Gait
-==========
+Joint Torque Predictive Simulation
+==================================
 
 .. note::
 
-    pygait2d and symmeplot and their dependencies must be installed first to
-    run this example. Note that pygait2d has not been released to PyPi or Conda
-    Forge::
+   Requires `opty >= 1.5.0`::
 
-        conda install cython pip pydy pyyaml setuptools symmeplot sympy
-        python -m pip install --no-deps --no-build-isolation git+https://github.com/csu-hmc/gait2d
+      conda install -c conda-forge opty>=1.50
 
 Objectives
 ----------
@@ -44,9 +41,6 @@ average speed over half a period.
 
 Import all necessary modules, functions, and classes:
 """
-import os
-import logging
-
 import numpy as np
 import sympy as sm
 import matplotlib.pyplot as plt
@@ -56,10 +50,6 @@ from symmeplot.matplotlib import Scene3D
 
 from pygait2d import derive, simulate
 from pygait2d.segment import time_symbol, contact_force
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logging.info('test')
 
 # %%
 # Derive the equations of motion using gait2d.
@@ -156,7 +146,6 @@ bounds.update({k: (-600.0, 600.0)
 # To enforce a half period, set the right leg's angles at the initial time to
 # be equal to the left leg's angles at the final time and vice versa. The same
 # goes for the joint angular rates.
-#
 instance_constraints = (
     delt.func(0*h) - 0.0,
     qax.func(0*h) - 0.0,
@@ -216,7 +205,6 @@ def obj_grad(prob, free):
 
 # %%
 # Create an optimization problem and solve it.
-logger.info('Instantiating the opty problem: static')
 prob = Problem(
     obj,
     obj_grad,
@@ -238,9 +226,10 @@ prob = Problem(
 # This loads a precomputed solution to save computation time. Delete the file
 # to try one of the suggested initial guesses.
 # choose one initial guess, comment others
-#initial_guess = prob.lower_bound + (
-    #prob.upper_bound -
-    #prob.lower_bound)*np.random.random_sample(prob.num_free)
+
+initial_guess = prob.lower_bound + (
+    prob.upper_bound -
+    prob.lower_bound)*np.random.random_sample(prob.num_free)
 initial_guess = 0.01*np.ones(prob.num_free)
 initial_guess = np.zeros(prob.num_free)
 initial_guess[-1] = 0.01
@@ -253,7 +242,6 @@ r_rep = np.repeat(rs[:, 0:1], num_nodes, axis=1)
 initial_guess = np.hstack((x_rep.flatten(), r_rep.flatten(), 0.01))
 initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
 
-logger.info('Instantiating the opty problem: walking')
 # TODO : It would be nice if we could update the number of nodes and the
 # instance constraints without creating a new problem.
 duration = (num_nodes - 1)*h
@@ -297,15 +285,15 @@ prob = Problem(
 solution = initial_guess
 for new_speed in np.linspace(0.01, 1.3, num=8):
     par_map[speed] = new_speed
-    logger.info(f"Running optimization for walking speed: "
-                f"{prob.collocator.known_parameter_map[speed]}")
+    print(f"Running optimization for walking speed: "
+          f"{prob.collocator.known_parameter_map[speed]}")
     solution, info = prob.solve(solution)
 
 # %%
 # Use symmeplot to make an animation of the motion.
 xs, rs, _, h_val = prob.parse_free(solution)
 times = prob.time_vector(solution=solution)
-
+# TODO : Switch to pygait2d.utils.plot() and pygait2d.utils.animate()
 
 def animate():
 
