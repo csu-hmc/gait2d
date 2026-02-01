@@ -16,7 +16,7 @@ jobs:
         python-version: ["3.13"]
     name: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -34,3 +34,5 @@ jobs:
           python -c "import pygait2d.segment"
           python -c "import algait2de.gait2de"
           pytest pygait2d/
+          cd docs
+          make html
