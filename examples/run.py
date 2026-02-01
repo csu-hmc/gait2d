@@ -4,8 +4,6 @@
 """This example simply simulates and visualizes the uncontrolled motion and
 the model "falls down"."""
 
-import os
-
 import numpy as np
 from scipy.integrate import odeint
 from pydy.codegen.ode_function_generators import generate_ode_function
@@ -17,9 +15,8 @@ from pygait2d import utils
 
 symbolics = derive.derive_equations_of_motion(treadmill=True)
 
-constant_values = simulate.load_constants(
-    symbolics.constants, os.path.join(os.path.dirname(__file__), '..',
-                                      'data/example_constants.yml'))
+constant_values = simulate.load_constants(symbolics.constants,
+                                          'example_constants.yml')
 
 rhs = generate_ode_function(
     symbolics.kanes_method.forcing_full,

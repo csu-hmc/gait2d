@@ -104,9 +104,7 @@ Tb, Tc, Td, Te, Tf, Tg = symbolics.specifieds
 # %%
 # The constants are loaded from a file of realistic geometry, mass, inertia,
 # and foot deformation properties of an adult human.
-par_map = simulate.load_constants(symbolics.constants,
-                                  os.path.join(os.path.dirname(__file__), '..',
-                                               'data/example_constants.yml'))
+par_map = simulate.load_constants(symbolics.constants, 'example_constants.yml')
 par_map
 
 # %%

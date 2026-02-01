@@ -7,6 +7,10 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+DOCS_CONF_PATH = os.path.realpath(__file__)
+DOCS_DIR = os.path.dirname(DOCS_CONF_PATH)
+REPO_DIR = os.path.realpath(os.path.join(DOCS_DIR, '..'))
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -24,7 +28,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    #'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
 ]
 
 templates_path = ['_templates']
@@ -42,3 +46,11 @@ html_static_path = ['_static']
 
 # Display long function signatures better.
 maximum_signature_line_length = 50
+
+# -- sphinx-gallery settings --------------------------------------------------
+sphinx_gallery_conf = {
+    'examples_dirs': os.path.join(REPO_DIR, 'examples'),
+    'gallery_dirs': 'examples',
+    'matplotlib_animations': True,
+    'remove_config_comments': True,
+}
