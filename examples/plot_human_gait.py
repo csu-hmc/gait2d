@@ -176,7 +176,7 @@ def obj(prob, free):
     """Minimize the sum of the squares of the control torques."""
     _, r, _, interval1 = prob.parse_free(free)
     torques1 = r.flatten()  # all torques
-    interval = prob.extract_values(free, h)
+    interval = prob.extract_values(free, h)[0]
     torques = prob.extract_values(free, *symbolics.specifieds)
     np.testing.assert_allclose(torques1, torques)
     return interval*np.sum(torques**2)
