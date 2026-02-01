@@ -16,7 +16,7 @@ jobs:
         python-version: ["3.13"]
     name: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -24,7 +24,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           environment-file: gait2d-dev.yml
-      - name: install and run tests
+          miniforge-version: latest
+      - name: install
         shell: bash -l {0}
         run: |
           conda info
@@ -32,4 +33,12 @@ jobs:
           conda list
           python -c "import pygait2d.segment"
           python -c "import algait2de.gait2de"
+      - name: run tests
+        shell: bash -l {0}
+        run: |
           pytest pygait2d/
+      - name: build docs
+        shell: bash -l {0}
+        run: |
+          cd docs
+          make html
