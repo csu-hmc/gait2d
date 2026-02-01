@@ -6,11 +6,6 @@
 Gait2D documentation
 ====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -18,4 +13,3 @@ documentation for details.
    api.rst
 
 .. include:: ../README.rst
-
