@@ -187,19 +187,32 @@ instance_constraints = (
 # The objective is to minimize the mean of all joint torques.
 def obj(prob, free):
     """Minimize the sum of the squares of the control torques."""
-    _, r, _, h = prob.parse_free(free)
-    T = r.flatten()  # all torques
-    return h*np.sum(T**2)
+    _, r, _, interval1 = prob.parse_free(free)
+    torques1 = r.flatten()  # all torques
+    interval = prob.extract_values(free, h)
+    torques = prob.extract_values(free, *symbolics.specifieds)
+    np.testing.assert_allclose(torques1, torques)
+    return interval*np.sum(torques**2)
 
 
 def obj_grad(prob, free):
-    _, r, _, h = prob.parse_free(free)
-    T = r.flatten()
-    grad = np.zeros_like(free)
+    _, r, _, interval1 = prob.parse_free(free)
+    torques1 = r.flatten()  # all torques
+    interval = prob.extract_values(free, h)
+    grad1 = np.zeros_like(free)
     n = prob.collocator.num_states
     N = prob.collocator.num_collocation_nodes
-    grad[n*N:-1] = 2.0*h*T
-    grad[-1] = np.sum(T**2)
+    grad1[n*N:-1] = 2.0*interval1*torques1
+    grad1[-1] = np.sum(torques1**2)
+
+    torques = prob.extract_values(free, *symbolics.specifieds)
+    grad = np.zeros_like(free)
+    prob.fill_free(grad, 2.0*interval*torques, *symbolics.specifieds)
+    prob.fill_free(grad, np.sum(torques**2), h)
+
+    np.testing.assert_allclose(torques1, torques)
+    np.testing.assert_allclose(grad1, grad)
+
     return grad
 
 
