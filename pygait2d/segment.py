@@ -31,34 +31,34 @@ def time_varying(sym_string):
 
 class BodySegment(object):
     """Represents a 2D rigid body which has a rotation joint (origin joint) and
-    an attachment joint (joint)."""
+    an attachment joint (joint).
+
+    Parameters
+    ==========
+    label : string
+        A short label for the segment, like 'A'.
+    description : string
+        A short description of the segment, like 'Trunk'.
+    parent_reference_frame : sympy.physics.vector.ReferenceFrame
+        The parent reference frame for this segment.
+    origin_joint : sympy.physics.vector.Point
+        The point where this segment is connected to its parent.
+    joint_description : string
+        A short description of a new joint point, e.g. 'knee', for this
+        segemt to attach to its child segment.
+    inertial_frame : sympy.physics.mechanics.ReferenceFrame
+        The global inertial reference frame of the system. This is used to
+        apply gravity to the segment (in the negative y direction of this
+        frame).
+
+    """
 
     viz_sphere_radius = 0.07  # meters
     viz_cylinder_radius = 0.035  # meters
 
     def __init__(self, label, description, parent_reference_frame,
                  origin_joint, joint_description, inertial_frame):
-        """Initializes a body segment.
-
-        Parameters
-        ==========
-        label : string
-            A short label for the segment, like 'A'.
-        description : string
-            A short description of the segment, like 'Trunk'.
-        parent_reference_frame : sympy.physics.vector.ReferenceFrame
-            The parent reference frame for this segment.
-        origin_joint : sympy.physics.vector.Point
-            The point where this segment is connected to its parent.
-        joint_description : string
-            A short description of a new joint point, e.g. 'knee', for this
-            segemt to attach to its child segment.
-        inertial_frame : sympy.physics.mechanics.ReferenceFrame
-            The global inertial reference frame of the system. This is used
-            to apply gravity to the segment (in the negative y direction of
-            this frame).
-
-        """
+        """Initializes a body segment."""
 
         self.label = label
         self.description = description

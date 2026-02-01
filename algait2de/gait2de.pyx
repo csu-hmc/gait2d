@@ -76,36 +76,36 @@ def evaluate_autolev_rhs(np.ndarray[np.double_t, ndim=1, mode='c'] generalized_c
 
     Generalized Coordinates
 
-    q1: x hip translation wrt ground
-    q2: y hip translation wrt ground
-    q3: trunk z rotation wrt ground
-    q4: right thigh z rotation wrt trunk
-    q5: right shank z rotation wrt right thigh
-    q6: right foot z rotation wrt right shank
-    q7: left thigh z rotation wrt trunk
-    q8: left shank z rotation wrt left thigh
-    q9: left foot z rotation wrt left shank
+    - q1: x hip translation wrt ground
+    - q2: y hip translation wrt ground
+    - q3: trunk z rotation wrt ground
+    - q4: right thigh z rotation wrt trunk
+    - q5: right shank z rotation wrt right thigh
+    - q6: right foot z rotation wrt right shank
+    - q7: left thigh z rotation wrt trunk
+    - q8: left shank z rotation wrt left thigh
+    - q9: left foot z rotation wrt left shank
 
     Specified Inputs
 
-    t1: x force applied to trunk mass center
-    t2: y force applied to trunk mass center
-    t3: torque between ground and trunk
-    t4: torque between right thigh and trunk
-    t5: torque between right thigh and right shank
-    t6: torque between right foot and right shank
-    t7: torque between left thigh and trunk
-    t8: torque between left thigh and left shank
-    t9: torque between left foot and left shank
+    - t1: x force applied to trunk mass center
+    - t2: y force applied to trunk mass center
+    - t3: tor- que between ground and trunk
+    - t4: tor- que between right thigh and trunk
+    - t5: tor- que between right thigh and right shank
+    - t6: tor- que between right foot and right shank
+    - t7: tor- que between left thigh and trunk
+    - t8: tor- que between left thigh and left shank
+    - t9: tor- que between left foot and left shank
 
     GRFs
 
-    grf1: right horizontal
-    grf2: right vertical
-    grf3: right moment
-    grf4: left horizontal
-    grf5: left vertical
-    grf6: left moment
+    - grf1: right horizontal
+    - grf2: right vertical
+    - grf3: right moment
+    - grf4: left horizontal
+    - grf5: left vertical
+    - grf6: left moment
 
     """
 

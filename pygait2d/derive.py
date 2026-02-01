@@ -27,15 +27,15 @@ class Symbolics():
     Parameters
     ==========
     kanes_method: KanesMethod
-        A ``KanesMethod`` object in which the equations of motion have been
-        derived.
-    dyn_diff_eqs: sm.Matrix
+        A :external:py:class:`KanesMethod` object in which the equations of
+        motion have been derived.
+    dyn_diff_eqs: Matrix
         Kane's Fr + Fr* expression.
     constants : list of Symbol
         Constants in the equations of motion.
     specifieds : list of Function(t), optional
         Specifed variables in the equations of motion.
-    inertial_frame: me.ReferenceFrame
+    inertial_frame: ReferenceFrame
         An inertial reference frame representing the Earth and the direction of
         the uniform gravitational field.
     origin : Point
@@ -363,8 +363,8 @@ def derive_equations_of_motion(
     - speeds: uax, uay, ua, ub, uc, ud, ue, uf, ug
     - specifieds: [Fax, Fay, Ta], Tb, Tc, Td, Te, Tf, Tg, [v]
 
-    [Fax, Fay, Ta] and [v] are included only if hand_of_god and treadmill are
-    true, respectively.
+    [Fax, Fay, Ta] and [v] are included only if ``hand_of_god`` and
+    ``treadmill`` are true, respectively.
 
     """
 
