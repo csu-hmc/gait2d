@@ -16,7 +16,7 @@ dependencies:
   - sympy
   # examples
   - opty >=1.5.0
-  - scipy
+  - scipy <=1.17
   # dev
   - ipython
   - jupyter
