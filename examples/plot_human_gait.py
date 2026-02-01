@@ -8,36 +8,16 @@ Joint Torque Predictive Simulation
 
       conda install -c conda-forge opty>=1.50
 
-Objectives
-----------
-
-This example highlights three points of interest compared to the others:
-
-- Instance constraints are used to make the start state the same as the end
-  state except for forward translation to solve for a cyclic trajectory, for
-  example :math:`q_b(t_0) = q_e(t_f)`.
-- The average speed is constrained in this variable time step solution by
-  introducing an additional differential equation that, when integrated, gives
-  the duration at :math:`\Delta_t(t)`, which can be used to calculate distance
-  traveled with :math:`q_{ax}(t_f) = v_\textrm{avg} (t_f - t_0)` and used as a
-  constraint.
-- The parallel option is enabled because the equations of motion are relatively
-  large. This speeds up the evaluation of the constraints and its Jacobian
-  about 1.3X.
-
 Introduction
 ------------
 
-This example replicates a similar solution as shown in [Ackermann2010]_ using
-joint torques as inputs instead of muscle activations [1]_.
+This example replicates a similar predictive simulation solution as shown in
+[Ackermann2010]_ using joint torques as inputs instead of muscle activations
+[1]_.
 
-gait2d provides a joint torque driven 2D bipedal human dynamical model with
-seven body segments (trunk, thighs, shanks, feet) and foot-ground contact
-forces based on the description in [Ackermann2010]_.
-
-The optimal control goal is to find the joint torques (hip, knee, ankle) that
-generate a minimal mean-torque periodic motion to ambulate at a specified
-average speed over half a period.
+The optimal control goal is to find the open-loop joint torque trajectories for
+hip, knee, and ankle torques that generate a minimal mean-torque periodic
+motion to ambulate at a specified average speed.
 
 Import all necessary modules, functions, and classes:
 """
@@ -52,7 +32,9 @@ from pygait2d import derive, simulate
 from pygait2d.segment import time_symbol, contact_force
 
 # %%
-# Derive the equations of motion using gait2d.
+# Derive the equations of motion using gait2d. Ground reaction forces are only
+# # needed on the feet points and no external forces and torques will act on
+# the trunk.
 symbolics = derive.derive_equations_of_motion(
     prevent_ground_penetration=False,
     hand_of_god=False,
@@ -98,8 +80,10 @@ par_map = simulate.load_constants(symbolics.constants, 'example_constants.yml')
 par_map
 
 # %%
-# Pick an average ambulation speed and the number of discretization nodes for
-# the half period and define the time step as a variable :math:`h`.
+# First solve a simple two-node standing solution to generate an initial guess
+# for a walking solution. Set the average ambulation speed to zero and the
+# number of discretization nodes for the half period to 2 and define the time
+# step as a variable :math:`h`.
 h = sm.symbols('h', real=True, positive=True)
 
 static_num_nodes = 2
@@ -115,7 +99,6 @@ par_map[speed] = 0.0
 #   height.
 # - Only let the hip, knee, and ankle flex and extend to realistic limits.
 # - Put a maximum on the peak torque values.
-
 bounds = {
     h: (0.005, 0.1),
     delt: (0.0, 10.0),
@@ -174,32 +157,17 @@ instance_constraints = (
 # The objective is to minimize the mean of all joint torques.
 def obj(prob, free):
     """Minimize the sum of the squares of the control torques."""
-    _, r, _, interval1 = prob.parse_free(free)
-    torques1 = r.flatten()  # all torques
     interval = prob.extract_values(free, h)[0]
     torques = prob.extract_values(free, *symbolics.specifieds)
-    np.testing.assert_allclose(torques1, torques)
     return interval*np.sum(torques**2)
 
 
 def obj_grad(prob, free):
-    _, r, _, interval1 = prob.parse_free(free)
-    torques1 = r.flatten()  # all torques
-    interval = prob.extract_values(free, h)
-    grad1 = np.zeros_like(free)
-    n = prob.collocator.num_states
-    N = prob.collocator.num_collocation_nodes
-    grad1[n*N:-1] = 2.0*interval1*torques1
-    grad1[-1] = np.sum(torques1**2)
-
     torques = prob.extract_values(free, *symbolics.specifieds)
+    interval = prob.extract_values(free, h)[0]
     grad = np.zeros_like(free)
     prob.fill_free(grad, 2.0*interval*torques, *symbolics.specifieds)
     prob.fill_free(grad, np.sum(torques**2), h)
-
-    np.testing.assert_allclose(torques1, torques)
-    np.testing.assert_allclose(grad1, grad)
-
     return grad
 
 
@@ -221,22 +189,16 @@ prob = Problem(
 )
 
 # %%
-# Find the optimal solution and save it if it converges.
-#
-# This loads a precomputed solution to save computation time. Delete the file
-# to try one of the suggested initial guesses.
-# choose one initial guess, comment others
-
-initial_guess = prob.lower_bound + (
-    prob.upper_bound -
-    prob.lower_bound)*np.random.random_sample(prob.num_free)
-initial_guess = 0.01*np.ones(prob.num_free)
+# Find the optimal standing solution.
 initial_guess = np.zeros(prob.num_free)
 initial_guess[-1] = 0.01
 solution, info = prob.solve(initial_guess)
 
-xs, rs, _, h_val = prob.parse_free(solution)
+# %%
+# Repeat the standing solution for the number of nodes used in the walking
+# solution and add some noise to the initial guess.
 num_nodes = 50
+xs, rs, _, h_val = prob.parse_free(solution)
 x_rep = np.repeat(xs[:, 0:1], num_nodes, axis=1)
 r_rep = np.repeat(rs[:, 0:1], num_nodes, axis=1)
 initial_guess = np.hstack((x_rep.flatten(), r_rep.flatten(), 0.01))
@@ -267,6 +229,7 @@ instance_constraints = (
     uf.func(0*h) - uc.func(duration),
     ug.func(0*h) - ud.func(duration),
 )
+
 prob = Problem(
     obj,
     obj_grad,
@@ -282,6 +245,10 @@ prob = Problem(
     tmp_dir='codegen',
 )
 
+# %%
+# Solve the optimization problem for increasing walking speeds using the
+# standing solution as the first initial guess and using the prior solution as
+# the subsequent guesses.
 solution = initial_guess
 for new_speed in np.linspace(0.01, 1.3, num=8):
     par_map[speed] = new_speed
@@ -294,6 +261,7 @@ for new_speed in np.linspace(0.01, 1.3, num=8):
 xs, rs, _, h_val = prob.parse_free(solution)
 times = prob.time_vector(solution=solution)
 # TODO : Switch to pygait2d.utils.plot() and pygait2d.utils.animate()
+
 
 def animate():
 
@@ -411,13 +379,3 @@ animation = animate()
 
 
 plt.show()
-
-# %%
-# Footnotes
-# ---------
-#
-# .. [1] The 2010 Ackermann and van den Bogert solution was the original target
-#    problem opty was written to solve, with an aim to extend it to parameter
-#    identification of closed loop control walking. For various reasons, this
-#    example was not added until 2025, 10 years after the example was first
-#    proposed.
