@@ -48,6 +48,7 @@ trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 # %%
 scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
                             args[0], args[1])
+ax.set_xlim((-0.8, 0.8))
 ax.set_ylim((-0.2, 1.4))
 ani = utils.animate(scene, fig, time_vector, trajectories,
                     np.zeros((len(time_vector), len(symbolics.specifieds))),
