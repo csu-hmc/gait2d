@@ -15,6 +15,7 @@ dependencies:
   - symmeplot
   - sympy
   # examples
+  - opty
   - scipy
   # dev
   - ipython
