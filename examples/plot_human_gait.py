@@ -1,15 +1,6 @@
-r"""
-Joint Torque Predictive Simulation
-==================================
-
-.. note::
-
-   Requires `opty >= 1.5.0`::
-
-      conda install -c conda-forge opty>=1.50
-
-Introduction
-------------
+"""
+Joint Torque Gait Predictive Simulation
+=======================================
 
 This example replicates a similar predictive simulation solution as shown in
 [Ackermann2010]_ using joint torques as inputs instead of muscle activations
@@ -19,23 +10,28 @@ The optimal control goal is to find the open-loop joint torque trajectories for
 hip, knee, and ankle torques that generate a minimal mean-torque periodic
 motion to ambulate at a specified average speed.
 
+.. note::
+
+   Requires `opty >= 1.5.0`::
+
+      conda install -c conda-forge opty>=1.50
+
 Import all necessary modules, functions, and classes:
 """
 import numpy as np
 import sympy as sm
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from opty import Problem
-from symmeplot.matplotlib import Scene3D
-
-from pygait2d import derive, simulate
-from pygait2d.segment import time_symbol, contact_force
+import matplotlib.pyplot as plt
+from pygait2d.derive import derive_equations_of_motion
+from pygait2d.segment import time_symbol
+from pygait2d.simulate import load_constants
+from pygait2d.utils import plot, animate
 
 # %%
 # Derive the equations of motion using gait2d. Ground reaction forces are only
-# # needed on the feet points and no external forces and torques will act on
-# the trunk.
-symbolics = derive.derive_equations_of_motion(
+# needed on the feet points and no external forces and torques will act on the
+# trunk.
+symbolics = derive_equations_of_motion(
     prevent_ground_penetration=False,
     hand_of_god=False,
 )
@@ -76,7 +72,11 @@ Tb, Tc, Td, Te, Tf, Tg = symbolics.specifieds
 # %%
 # The constants are loaded from a file of realistic geometry, mass, inertia,
 # and foot deformation properties of an adult human.
-par_map = simulate.load_constants(symbolics.constants, 'example_constants.yml')
+try:
+    par_map = load_constants(symbolics.constants, 'example_constants.yml')
+except FileNotFoundError:
+    par_map = load_constants(symbolics.constants,
+                             'examples/example_constants.yml')
 par_map
 
 # %%
@@ -121,7 +121,7 @@ bounds.update({k: (-np.deg2rad(30.0), np.deg2rad(30.0))
 bounds.update({k: (-np.deg2rad(400.0), np.deg2rad(400.0))
                for k in [ua, ub, uc, ud, ue, uf, ug]})
 # all joint torques
-bounds.update({k: (-600.0, 600.0)
+bounds.update({k: (-60.0, 60.0)
                for k in [Tb, Tc, Td, Te, Tf, Tg]})
 
 # %%
@@ -163,8 +163,8 @@ def obj(prob, free):
 
 
 def obj_grad(prob, free):
-    torques = prob.extract_values(free, *symbolics.specifieds)
     interval = prob.extract_values(free, h)[0]
+    torques = prob.extract_values(free, *symbolics.specifieds)
     grad = np.zeros_like(free)
     prob.fill_free(grad, 2.0*interval*torques, *symbolics.specifieds)
     prob.fill_free(grad, np.sum(torques**2), h)
@@ -257,125 +257,21 @@ for new_speed in np.linspace(0.01, 1.3, num=8):
     solution, info = prob.solve(solution)
 
 # %%
-# Use symmeplot to make an animation of the motion.
+# Extract the solution trajectories.
 xs, rs, _, h_val = prob.parse_free(solution)
+ps = np.array(list(par_map.values()))
 times = prob.time_vector(solution=solution)
-# TODO : Switch to pygait2d.utils.plot() and pygait2d.utils.animate()
 
+# TODO : plot() and animate() can only work with states and parameters defined
+# in Symbolics, so we have to delete these extras added above. It would be
+# better if plot() and animate() were not affected by this.
+xs = xs[:-1, :]  # drop the extra time state
+del par_map[speed]
+ps = np.array(list(par_map.values()))
 
-def animate():
-
-    origin = symbolics.origin
-    ground = symbolics.inertial_frame
-    trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = symbolics.segments
-
-    fig = plt.figure(figsize=(10.0, 4.0))
-
-    ax3d = fig.add_subplot(1, 2, 1, projection='3d')
-    ax2d = fig.add_subplot(1, 2, 2)
-
-    hip_proj = origin.locatenew('m', qax*ground.x)
-    scene = Scene3D(ground, hip_proj, ax=ax3d)
-
-    # creates the stick person
-    scene.add_line([
-        rshank.joint,
-        rfoot.toe,
-        rfoot.heel,
-        rshank.joint,
-        rthigh.joint,
-        trunk.joint,
-        trunk.mass_center,
-        trunk.joint,
-        lthigh.joint,
-        lshank.joint,
-        lfoot.heel,
-        lfoot.toe,
-        lshank.joint,
-    ], color="k")
-
-    # creates a moving ground (many points to deal with matplotlib limitation)
-    scene.add_line([origin.locatenew('gl', s*ground.x) for s in
-                    np.linspace(-2.0, 2.0)], linestyle='--', color='tab:green',
-                   axlim_clip=True)
-
-    # adds CoM and unit vectors for each body segment
-    for seg in symbolics.segments:
-        scene.add_body(seg.rigid_body)
-
-    # show ground reaction force vectors at the heels and toes, scaled to
-    # visually reasonable length
-    scene.add_vector(contact_force(rfoot.toe, ground, origin)/600.0,
-                     rfoot.toe, color="tab:blue")
-    scene.add_vector(contact_force(rfoot.heel, ground, origin)/600.0,
-                     rfoot.heel, color="tab:blue")
-    scene.add_vector(contact_force(lfoot.toe, ground, origin)/600.0,
-                     lfoot.toe, color="tab:blue")
-    scene.add_vector(contact_force(lfoot.heel, ground, origin)/600.0,
-                     lfoot.heel, color="tab:blue")
-
-    del par_map[speed]
-    scene.lambdify_system(states + symbolics.specifieds + symbolics.constants)
-    gait_cycle = np.vstack((
-        xs,  # q, u shape(2n, N)
-        rs,  # r, shape(q, N)
-        np.repeat(np.atleast_2d(np.array(list(par_map.values()))).T,
-                  len(times), axis=1),  # p, shape(r, N)
-    ))
-    scene.evaluate_system(*gait_cycle[:, 0])
-
-    scene.axes.set_proj_type("ortho")
-    scene.axes.view_init(90, -90, 0)
-    scene.plot(prettify=False)
-
-    ax3d.set_xlim((-0.8, 0.8))
-    ax3d.set_ylim((-0.2, 1.4))
-    ax3d.set_aspect('equal')
-    for axis in (ax3d.xaxis, ax3d.yaxis, ax3d.zaxis):
-        axis.set_ticklabels([])
-        axis.set_ticks_position("none")
-
-    eval_rforce = sm.lambdify(
-        states + symbolics.specifieds + symbolics.constants,
-        (contact_force(rfoot.toe, ground, origin) +
-         contact_force(rfoot.heel, ground, origin)).to_matrix(ground),
-        cse=True)
-
-    eval_lforce = sm.lambdify(
-        states + symbolics.specifieds + symbolics.constants,
-        (contact_force(lfoot.toe, ground, origin) +
-         contact_force(lfoot.heel, ground, origin)).to_matrix(ground),
-        cse=True)
-
-    rforces = np.array([eval_rforce(*gci).squeeze() for gci in gait_cycle.T])
-    lforces = np.array([eval_lforce(*gci).squeeze() for gci in gait_cycle.T])
-
-    ax2d.plot(times, rforces[:, :2], times, lforces[:, :2])
-    ax2d.grid()
-    ax2d.set_ylabel('Force [N]')
-    ax2d.set_xlabel('Time [s]')
-    ax2d.legend(['Horizontal GRF (r)', 'Vertical GRF (r)',
-                 'Horizontal GRF (l)', 'Vertical GRF (l)'], loc='upper right')
-    ax2d.set_title('Foot Ground Reaction Force Components')
-    vline = ax2d.axvline(times[0], color='black')
-
-    def update(i):
-        scene.evaluate_system(*gait_cycle[:, i])
-        scene.update()
-        vline.set_xdata([times[i], times[i]])
-        return scene.artists + (vline,)
-
-    ani = FuncAnimation(
-        fig,
-        update,
-        frames=range(len(times)),
-        interval=h_val*1000,
-    )
-
-    return ani
-
-
-animation = animate()
-
+# %%
+# Animate the motion.
+scene, fig, ax = plot(symbolics, times, xs[:, 0], rs[:, 0], ps)
+ani = animate(scene, fig, times, xs.T, rs.T, ps)
 
 plt.show()

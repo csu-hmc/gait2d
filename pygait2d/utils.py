@@ -256,7 +256,6 @@ def plot(sym, times, x, r, p):
         lshank.joint,
     ], color="k", marker='.', markersize=12)
 
-
     if sym.muscles is not None:
         for i, mus in enumerate(sym.muscles):
             color = "C{}".format(i)
@@ -323,25 +322,28 @@ def plot(sym, times, x, r, p):
 
 
 def animate(scene, fig, times, xs, rs, ps, file_path=None):
-    """
+    """Returns a matplotlib animation of the model.
 
     Parameters
     ==========
     scene: Scene3D
-        A scene preconstructed from ``plot()``.
+        A scene preconstructed from :py:func:`plot`.
     times: array_like, shape(N,)
         Monotonically increasing time with equally spaced time intervals.
-    xs : array_like, shape(n, N)
-    rs : array_like, shape(q, N)
+    xs : array_like, shape(N, n)
+        State trajectories corresponding to the n Symbolics.states.
+    rs : array_like, shape(N, q)
+        Input trajectories corresponding to the q Symbolics.specifieds.
     ps : array_like, shape(r,)
+        Constant parameters corresponding to the r Symbolics.constants.
     file_path : string, optional
         If a path to a movie file is provided, the animation will be saved to
-        file.
+        file. See matplotlib's ``FuncAnimation.save()``.
 
     """
 
     gait_cycle = np.vstack((
-        xs.T,  # q, u shape(2n, N)
+        xs.T,  # x shape(n, N)
         rs.T,  # r, shape(q, N)
         np.repeat(np.atleast_2d(ps).T, len(times), axis=1),  # p, shape(r, N)
     ))
