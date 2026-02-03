@@ -272,6 +272,8 @@ ps = np.array(list(par_map.values()))
 # %%
 # Animate the motion.
 scene, fig, ax = plot(symbolics, times, xs[:, 0], rs[:, 0], ps)
+ax.set_xlim((-0.8, 0.8))
+ax.set_ylim((-0.2, 1.4))
 ani = animate(scene, fig, times, xs.T, rs.T, ps)
 
 plt.show()

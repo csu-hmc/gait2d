@@ -214,7 +214,9 @@ def plot(sym, times, x, r, p):
     Parameters
     ==========
     sym: Symbolics
+        Data class that holds the symbolic dynamics model.
     times: array_like, shape(N,)
+        Monotonically increasing time.
     x: array_like, shape(n,)
         State values ordered as Symbolics.states.
     r: array_like, shape(,)
@@ -314,8 +316,6 @@ def plot(sym, times, x, r, p):
     scene.axes.view_init(90, -90, 0)
     scene.plot()
 
-    #ax.set_xlim((-0.8, 0.8))
-    #ax.set_ylim((-0.2, 1.4))
     ax.set_aspect('equal')
 
     return scene, fig, ax
