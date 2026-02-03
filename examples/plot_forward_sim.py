@@ -1,23 +1,25 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""
+Forward Simulation
+==================
 
-"""This example simply simulates and visualizes the uncontrolled motion and
-the model "falls down"."""
-
-import numpy as np
-from scipy.integrate import odeint
-from pydy.codegen.ode_function_generators import generate_ode_function
-from pydy.viz import Scene
-import matplotlib.pyplot as plt
-
+This example simply simulates and visualizes the uncontrolled motion and the
+model "falls down".
+"""
 from pygait2d import derive, simulate
 from pygait2d import utils
+import numpy as np
+from pydy.codegen.ode_function_generators import generate_ode_function
+from scipy.integrate import odeint
+import matplotlib.pyplot as plt
 
+# %%
 symbolics = derive.derive_equations_of_motion(treadmill=True)
 
+# %%
 constant_values = simulate.load_constants(symbolics.constants,
                                           'example_constants.yml')
 
+# %%
 rhs = generate_ode_function(
     symbolics.kanes_method.forcing_full,
     symbolics.coordinates,
@@ -30,6 +32,7 @@ rhs = generate_ode_function(
     specifieds_arg_type='array',
 )
 
+# %%
 specifieds_vals = np.zeros(len(symbolics.specifieds))
 specifieds_vals[-1] = 1.0
 
@@ -42,17 +45,12 @@ initial_conditions[3] = np.deg2rad(5.0)  # right hip angle
 initial_conditions[6] = -np.deg2rad(5.0)  # left hip angle
 trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 
+# %%
 scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
                             args[0], args[1])
+ax.set_ylim((-0.2, 1.4))
 ani = utils.animate(scene, fig, time_vector, trajectories,
                     np.zeros((len(time_vector), len(symbolics.specifieds))),
                     args[1])
 
 plt.show()
-
-scene = Scene(symbolics.inertial_frame, symbolics.origin,
-              *symbolics.viz_frames)
-scene.states_symbols = symbolics.states
-scene.constants = constant_values
-scene.states_trajectories = trajectories
-scene.times = time_vector
