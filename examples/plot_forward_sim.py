@@ -5,6 +5,7 @@ Forward Simulation
 This example simply simulates and visualizes the uncontrolled motion and the
 model "falls down".
 """
+import sympy as sm
 from pygait2d import derive, simulate
 from pygait2d import utils
 import numpy as np
@@ -21,11 +22,12 @@ constant_values = simulate.load_constants(symbolics.constants,
 
 # %%
 rhs = generate_ode_function(
-    symbolics.kanes_method.forcing_full,
+    symbolics.kanes_method.forcing,
     symbolics.coordinates,
     symbolics.speeds,
     constants=list(constant_values.keys()),
-    mass_matrix=symbolics.kanes_method.mass_matrix_full,
+    mass_matrix=symbolics.kanes_method.mass_matrix,
+    coordinate_derivatives=sm.Matrix(symbolics.speeds),
     specifieds=symbolics.specifieds,
     generator='cython',
     constants_arg_type='array',
@@ -38,7 +40,7 @@ specifieds_vals[-1] = 1.0
 
 args = (specifieds_vals, np.array(list(constant_values.values())))
 
-time_vector = np.linspace(0.0, 2.0, num=1000)
+time_vector = np.linspace(0.0, 2.0, num=201)
 initial_conditions = np.zeros(len(symbolics.states))
 initial_conditions[1] = 1.0  # set hip above ground
 initial_conditions[3] = np.deg2rad(5.0)  # right hip angle

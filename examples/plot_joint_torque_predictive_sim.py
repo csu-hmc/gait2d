@@ -191,7 +191,8 @@ prob = Problem(
 # %%
 # Find the optimal standing solution.
 initial_guess = np.zeros(prob.num_free)
-initial_guess[-1] = 0.01
+initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
+initial_guess[-1] = 0.02
 solution, info = prob.solve(initial_guess)
 
 # %%
@@ -271,7 +272,8 @@ ps = np.array(list(par_map.values()))
 
 # %%
 # Animate the motion.
-scene, fig, ax = plot(symbolics, times, xs[:, 0], rs[:, 0], ps)
+scene, fig, ax = plot(symbolics, times, xs[:, 0], rs[:, 0], ps,
+                      follow=symbolics.segments[0].joint)
 ax.set_xlim((-0.8, 0.8))
 ax.set_ylim((-0.2, 1.4))
 ani = animate(scene, fig, times, xs.T, rs.T, ps)

@@ -207,7 +207,7 @@ class ExtensorPathway(me.PathwayBase):
         return loads
 
 
-def plot(sym, times, x, r, p):
+def plot(sym, times, x, r, p, follow=None):
     """Returns a symmeplot generated matplotlib figure of the model's
     configuration.
 
@@ -223,6 +223,10 @@ def plot(sym, times, x, r, p):
         Specified values ordered as Symbolics.specifieds.
     p: array_like, shape(,)
         Constant values ordered as Symbolics.constants.
+    follow : Point, optional
+        If a point is provided then the plot origin will align with the x
+        location of this point. This purpose of this is mostly for having the
+        animation follow a point.
 
     Returns
     =======
@@ -235,6 +239,9 @@ def plot(sym, times, x, r, p):
 
     ground = sym.inertial_frame
     origin = sym.origin
+    if follow is not None:
+        origin = follow.locatenew(
+            'xtrack', -follow.pos_from(origin).dot(ground.y)*ground.y)
     trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = sym.segments
 
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
