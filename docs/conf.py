@@ -44,6 +44,17 @@ intersphinx_mapping = {
 html_theme = 'alabaster'
 html_static_path = ['_static']
 
+# Theme options are theme-specific and customize the look and feel of a theme
+# further.  For a list of options available for each theme, see the
+# documentation.
+#
+html_theme_options = {
+    'github_repo': 'gait2d',
+    'github_type': 'star',
+    'github_user': 'csu-hmc',
+    'page_width': '1080px',  # 960 doesn't show 79 linewidth examples
+}
+
 # Display long function signatures better.
 maximum_signature_line_length = 50
 
