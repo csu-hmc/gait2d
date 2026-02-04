@@ -7,8 +7,6 @@ build:
     install:
       - which python
       - python -m pip install --no-deps --no-build-isolation .
-      - python -c "import algait2de"
-      - python -c "from algait2de import gait2de"
 sphinx:
   configuration: docs/conf.py
 formats: all
