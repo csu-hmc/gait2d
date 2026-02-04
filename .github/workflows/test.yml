@@ -29,7 +29,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda info
-          python -m pip install --no-deps --no-build-isolation .
+          python -m pip install --no-deps --no-build-isolation --editable .
           conda list
       - name: run tests
         shell: bash -l {0}
