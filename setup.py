@@ -3,8 +3,7 @@
 
 import os
 import numpy
-from setuptools import setup, find_packages
-from distutils.extension import Extension
+from setuptools import setup, find_packages, Extension
 from Cython.Build import cythonize
 
 exec(open('pygait2d/version.py').read())
