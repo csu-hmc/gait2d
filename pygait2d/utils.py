@@ -207,20 +207,26 @@ class ExtensorPathway(me.PathwayBase):
         return loads
 
 
-def plot(sym, times, x, r, p):
+def plot(sym, times, x, r, p, follow=None):
     """Returns a symmeplot generated matplotlib figure of the model's
     configuration.
 
     Parameters
     ==========
     sym: Symbolics
+        Data class that holds the symbolic dynamics model.
     times: array_like, shape(N,)
+        Monotonically increasing time.
     x: array_like, shape(n,)
         State values ordered as Symbolics.states.
     r: array_like, shape(,)
         Specified values ordered as Symbolics.specifieds.
     p: array_like, shape(,)
         Constant values ordered as Symbolics.constants.
+    follow : Point, optional
+        If a point is provided then the plot origin will align with the x
+        location of this point. This purpose of this is mostly for having the
+        animation follow a point.
 
     Returns
     =======
@@ -233,6 +239,9 @@ def plot(sym, times, x, r, p):
 
     ground = sym.inertial_frame
     origin = sym.origin
+    if follow is not None:
+        origin = follow.locatenew(
+            'xtrack', -follow.pos_from(origin).dot(ground.y)*ground.y)
     trunk, rthigh, rshank, rfoot, lthigh, lshank, lfoot = sym.segments
 
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
@@ -255,7 +264,6 @@ def plot(sym, times, x, r, p):
         lfoot.toe,
         lshank.joint,
     ], color="k", marker='.', markersize=12)
-
 
     if sym.muscles is not None:
         for i, mus in enumerate(sym.muscles):
@@ -315,33 +323,34 @@ def plot(sym, times, x, r, p):
     scene.axes.view_init(90, -90, 0)
     scene.plot()
 
-    #ax.set_xlim((-0.8, 0.8))
-    #ax.set_ylim((-0.2, 1.4))
     ax.set_aspect('equal')
 
     return scene, fig, ax
 
 
 def animate(scene, fig, times, xs, rs, ps, file_path=None):
-    """
+    """Returns a matplotlib animation of the model.
 
     Parameters
     ==========
     scene: Scene3D
-        A scene preconstructed from ``plot()``.
+        A scene preconstructed from :py:func:`plot`.
     times: array_like, shape(N,)
         Monotonically increasing time with equally spaced time intervals.
-    xs : array_like, shape(n, N)
-    rs : array_like, shape(q, N)
+    xs : array_like, shape(N, n)
+        State trajectories corresponding to the n Symbolics.states.
+    rs : array_like, shape(N, q)
+        Input trajectories corresponding to the q Symbolics.specifieds.
     ps : array_like, shape(r,)
+        Constant parameters corresponding to the r Symbolics.constants.
     file_path : string, optional
         If a path to a movie file is provided, the animation will be saved to
-        file.
+        file. See matplotlib's ``FuncAnimation.save()``.
 
     """
 
     gait_cycle = np.vstack((
-        xs.T,  # q, u shape(2n, N)
+        xs.T,  # x shape(n, N)
         rs.T,  # r, shape(q, N)
         np.repeat(np.atleast_2d(ps).T, len(times), axis=1),  # p, shape(r, N)
     ))

@@ -9,6 +9,10 @@ import sys
 import algait2de
 import pygait2d
 
+DOCS_CONF_PATH = os.path.realpath(__file__)
+DOCS_DIR = os.path.dirname(DOCS_CONF_PATH)
+REPO_DIR = os.path.realpath(os.path.join(DOCS_DIR, '..'))
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -27,7 +31,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    #'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
 ]
 
 templates_path = ['_templates']
@@ -43,5 +47,24 @@ intersphinx_mapping = {
 html_theme = 'alabaster'
 html_static_path = ['_static']
 
+# Theme options are theme-specific and customize the look and feel of a theme
+# further.  For a list of options available for each theme, see the
+# documentation.
+#
+html_theme_options = {
+    'github_repo': 'gait2d',
+    'github_type': 'star',
+    'github_user': 'csu-hmc',
+    'page_width': '1080px',  # 960 doesn't show 79 linewidth examples
+}
+
 # Display long function signatures better.
 maximum_signature_line_length = 50
+
+# -- sphinx-gallery settings --------------------------------------------------
+sphinx_gallery_conf = {
+    'examples_dirs': os.path.join(REPO_DIR, 'examples'),
+    'gallery_dirs': 'examples',
+    'matplotlib_animations': True,
+    'remove_config_comments': True,
+}

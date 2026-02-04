@@ -60,7 +60,7 @@ def test_accelerations():
     specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
-        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
+        symbolics.constants, os.path.join(ROOT, 'examples/example_constants.yml'))
     constant_values = np.array(list(constant_map.values()))
 
     args = (specified_values, constant_values)
@@ -78,7 +78,7 @@ def test_accelerations():
                                         specified_values, constant_values),
                         number=1000))
 
-    with open(os.path.join(ROOT, 'data/example_constants.yml'), 'r') as f:
+    with open(os.path.join(ROOT, 'examples/example_constants.yml'), 'r') as f:
         constants_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
     constants_dict = simulate.map_values_to_autolev_symbols(constants_dict)
@@ -117,7 +117,7 @@ def test_with_control():
     specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
-        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
+        symbolics.constants, os.path.join(ROOT, 'examples/example_constants.yml'))
     args = (specified_values, np.array(list(constant_map.values())))
 
     x = np.hstack((coordinate_values, speed_values))
@@ -137,7 +137,7 @@ def test_with_muscles(plot=False, animate=False):
     specified_values = np.random.random(len(symbolics.specifieds))
 
     constant_map = simulate.load_constants(
-        symbolics.constants, os.path.join(ROOT, 'data/example_constants.yml'))
+        symbolics.constants, os.path.join(ROOT, 'examples/example_constants.yml'))
     constant_values = np.array(list(constant_map.values()))
 
     time_vector = np.linspace(0.0, 0.5, num=100)
