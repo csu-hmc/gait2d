@@ -2,12 +2,14 @@ version: 2
 build:
   os: "ubuntu-24.04"
   tools:
-    python: "miniconda-latest"
+    python: "miniforge3-latest"
+  jobs:
+    install:
+      - which python
+      - python -m pip install --no-deps --no-build-isolation .
+      - python -c "import algait2de"
 sphinx:
   configuration: docs/conf.py
 formats: all
 conda:
   environment: gait2d-dev.yml
-python:
-  install:
-    - python -m pip install --no-deps --no-build-isolation .
