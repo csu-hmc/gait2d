@@ -7,12 +7,16 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+import algait2de
+import pygait2d
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Gait2D'
-copyright = '2025, Jason K. Moore and Ton van den Bogert'
+copyright = '2014-2026, Jason K. Moore and Ton van den Bogert'
 author = 'Jason K. Moore and Ton van den Bogert'
+version = pygait2d.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
