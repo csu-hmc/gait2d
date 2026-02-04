@@ -5,7 +5,6 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
 
 import algait2de
 import pygait2d
