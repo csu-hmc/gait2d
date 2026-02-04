@@ -10,5 +10,5 @@ conda:
   environment: gait2d-dev.yml
 python:
   install:
-    - method: setuptools
+    - method: pip
       path: .
