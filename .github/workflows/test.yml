@@ -29,7 +29,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda info
-          python -m pip install --no-deps --no-build-isolation --editable .
+          python -m pip install --no-deps --no-build-isolation .
           conda list
           python -c "import pygait2d.segment"
           python -c "import algait2de.gait2de"
