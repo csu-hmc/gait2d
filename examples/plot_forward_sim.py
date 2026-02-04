@@ -2,9 +2,9 @@
 Forward Simulation
 ==================
 
-This example simply simulates and visualizes the uncontrolled motion and the
-model falls down on the treadmill. It also compares the evaluation speed of
-PyDy's and Autolev's models.
+This example simulates and visualizes the uncontrolled motion of the model such
+that the model falls down on the treadmill. It also compares the evaluation
+speed of PyDy's and Autolev's models.
 """
 import timeit
 
@@ -50,9 +50,9 @@ rhs = generate_ode_function(
     coordinate_derivatives=sm.Matrix(symbolics.speeds),
     specifieds=symbolics.specifieds,
     generator='cython',
+    linear_sys_solver='sympy',
     constants_arg_type='array',
     specifieds_arg_type='array',
-    linear_sys_solver='sympy',  # slowest code generation, fastest evaluation
 )
 
 # %%
@@ -68,12 +68,12 @@ initial_conditions[3] = np.deg2rad(5.0)  # right hip angle
 initial_conditions[6] = -np.deg2rad(5.0)  # left hip angle
 
 # %%
-# Time the average execuation of PyDy's ODE function evaluation.
+# Time the average execution of PyDy's ODE function evaluation.
 print('PyDy evaluation time:',
       timeit.timeit(lambda: rhs(initial_conditions, 0.0, *args), number=1000))
 
 # %%
-# Time the average execuation of Autolev s ODE function evaluation.
+# Time the average execution of Autolev s ODE function evaluation.
 autolev_constants_dict = simulate.map_values_to_autolev_symbols(constants_dict)
 print('Autolev evaluation time:',
       timeit.timeit(lambda: evaluate_autolev_rhs(initial_conditions[:9],
@@ -83,13 +83,13 @@ print('Autolev evaluation time:',
                     number=1000))
 
 # %%
-# Simulation the model for two seconds using the LSODA integrator (switches #
+# Simulate the model for two seconds using the LSODA integrator (switches
 # between stiff and non-stiff modes).
-time_vector = np.linspace(0.0, 2.0, num=201)
+time_vector = np.linspace(0.0, 2.0, num=61)
 trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 
 # %%
-# Visualization the resulting forward simulation motion.
+# Visualization of the resulting motion from the forward simulation.
 scene, fig, ax = utils.plot(symbolics, time_vector, initial_conditions,
                             args[0], args[1])
 ax.set_xlim((-0.8, 0.8))
