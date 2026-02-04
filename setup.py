@@ -3,8 +3,7 @@
 
 import os
 import numpy
-from setuptools import setup, find_packages
-from distutils.extension import Extension
+from setuptools import setup, find_packages, Extension
 from Cython.Build import cythonize
 
 exec(open('pygait2d/version.py').read())
@@ -35,7 +34,7 @@ setup(
         'sympy',
     ],
     extras_require={
-        'examples': ['numpy', 'scipy', 'cython'],
+        'examples': ['numpy', 'scipy', 'cython', 'opty'],
         'doc': ['sphinx', 'numpydoc'],
     },
     tests_require=['pytest'],
@@ -45,10 +44,10 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Scientific/Engineering :: Physics',
     ],
 )
