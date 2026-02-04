@@ -10,5 +10,4 @@ conda:
   environment: gait2d-dev.yml
 python:
   install:
-    - method: pip
-      path: .
+    - python -m pip install --no-deps --no-build-isolation .
