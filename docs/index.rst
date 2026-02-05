@@ -10,6 +10,7 @@ Gait2D documentation
    :maxdepth: 2
    :caption: Contents:
 
+   model.rst
    examples/index.rst
    api.rst
 
