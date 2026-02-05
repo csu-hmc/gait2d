@@ -20,15 +20,40 @@ Herr (2010) [Geyer2010]_.
 
 The included Autolev model was originally written by Ton van den Bogert and
 adapted by Jason K. Moore. The SymPy Mechanics model was created by Jason to
-match the Autolev model results for use with PyDy and opty.
+match the Autolev model results and then futher extended for use with PyDy and
+opty.
 
-Speed
-=====
+Dependencies
+============
 
-The cythonized Autolev C code takes about 5 micro seconds per rhs eval and the
-PyDy Cython version takes about 15 microseconds (the PyDy version is slower
-because of the Python level linear solve on the full mass matrix, but only for
-forward dynamics).
+Run time dependencies:
+
+- matplotlib
+- numpy
+- pydy
+- python
+- pyyaml
+- symmeplot
+- sympy
+
+Build dependencies:
+
+- cython [with a C compiler]
+- numpy
+- python
+- setuptools
+
+Development dependencies:
+
+- pytest
+- sphinx
+- sphinx_gallery
+
+Dependencies used in the examples:
+
+- cython [with a C compiler]
+- opty
+- scipy
 
 Install
 =======
@@ -48,18 +73,21 @@ Usage
 pygait2d
 --------
 
-See ``examples/run.py``.
+See ``examples/plot_forward_sim.py`` for a basic use example.
 
 algait2de
 ---------
 
-To manually build the Autolev model and make use of it in Python::
+To manually rebuild the Autolev model and make use of it in Python::
 
    $ cd algait2d
    $ al gait2de.al
    $ python autolevclean.py
    $ cd ..
-   $ python setup.py build_ext --inplace
+   $ python -m pip install --no-deps --no-build-isolation --editable .
+
+The above will install algait2de and then it is importable and used with::
+
    $ python
    >>> from algait2de import gait2de
    >>> gait2de.evaluate_autolev_rhs(...)
