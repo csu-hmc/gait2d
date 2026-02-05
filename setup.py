@@ -29,13 +29,16 @@ setup(
     license='LICENSE.txt',
     packages=find_packages(),
     install_requires=[
+        'matplotlib',
+        'numpy',
         'pydy',
         'pyyaml',
+        'symmeplot',
         'sympy',
     ],
     extras_require={
-        'examples': ['numpy', 'scipy', 'cython', 'opty'],
-        'doc': ['sphinx', 'numpydoc'],
+        'examples': ['cython', 'opty', 'scipy'],
+        'doc': ['sphinx', 'sphinx-gallery'],
     },
     tests_require=['pytest'],
     ext_modules=cythonize([extension]),
@@ -48,6 +51,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Topic :: Scientific/Engineering :: Physics',
     ],
 )

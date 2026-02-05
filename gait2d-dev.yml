@@ -4,11 +4,11 @@ channels:
 dependencies:
   # build
   - cython
+  - numpy  # also run dep
   - pip
   - setuptools
   # run
   - matplotlib
-  - numpy
   - pydy >=0.8.0
   - python
   - pyyaml
