@@ -321,6 +321,7 @@ def derive_equations_of_motion(
     prevent_ground_penetration=True,
     treadmill=False,
     hand_of_god=True,
+    stiffness_exp=3,
 ):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
@@ -348,6 +349,8 @@ def derive_equations_of_motion(
     hand_of_god : boolean, optional
         If true, a two component specified force acting on the mass center of
         the torso and a torque acting on the torso will be included.
+    stiffness_exp : float, optional
+        Exponent of the contact force stiffness force.
 
     Returns
     =======
@@ -449,16 +452,19 @@ def derive_equations_of_motion(
         if label == 'D' or label == 'G':  # foot
             external_forces_torques.append(
                 (segment.heel, contact_force(segment.heel, ground, origin,
-                                             belt_speed=belt_speed)))
+                                             belt_speed=belt_speed,
+                                             stiffness_exp=stiffness_exp)))
             external_forces_torques.append(
                 (segment.toe, contact_force(segment.toe, ground, origin,
-                                            belt_speed=belt_speed)))
+                                            belt_speed=belt_speed,
+                                            stiffness_exp=stiffness_exp)))
         else:
             if prevent_ground_penetration:
                 external_forces_torques.append(
                     (segment.joint, contact_force(segment.joint, ground,
                                                   origin,
-                                                  belt_speed=belt_speed)))
+                                                  belt_speed=belt_speed,
+                                                  stiffness_exp=stiffness_exp)))
 
         # bodies
         bodies.append(segment.rigid_body)
@@ -474,14 +480,16 @@ def derive_equations_of_motion(
         external_forces_torques.append((segments[0].joint,
                                         contact_force(segments[0].joint,
                                                       ground, seat_level,
-                                                      belt_speed=belt_speed)))
+                                                      belt_speed=belt_speed,
+                                                      stiffness_exp=stiffness_exp)))
 
     if prevent_ground_penetration:
         # add contact force for trunk mass center.
         external_forces_torques.append(
             (segments[0].mass_center, contact_force(segments[0].mass_center,
                                                     ground, origin,
-                                                    belt_speed=belt_speed)))
+                                                    belt_speed=belt_speed,
+                                                    stiffness_exp=stiffness_exp)))
     if hand_of_god:
         # add hand of god
         # TODO : move this into segment.py

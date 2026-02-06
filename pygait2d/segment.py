@@ -425,7 +425,7 @@ class FootSegment(BodySegment):
         return viz_frames
 
 
-def contact_force(point, ground, origin, belt_speed=S(0)):
+def contact_force(point, ground, origin, belt_speed=S(0), stiffness_exp=3):
     """Returns a contact force vector acting on the given point made of
     friction along the contact surface and elastic force in the vertical
     direction.
@@ -442,6 +442,8 @@ def contact_force(point, ground, origin, belt_speed=S(0)):
     belt_speed : sympifiable, i.e. Symbol, Function(), number, etc.
         A variable or value that represents the possibly time varying belt
         speed for treadmill walking.
+    stiffness_exp : float, optional
+        Expoent of the stiffness force.
 
     Returns
     =======
@@ -472,8 +474,8 @@ def contact_force(point, ground, origin, belt_speed=S(0)):
     contact_friction_coefficient, friction_scaling_factor = \
         symbols('mu, vs', **sym_kwargs)
 
-    vertical_force = (contact_stiffness * penetration ** 3 - y_location) * \
-        (1 - contact_damping * velocity.dot(ground.y))
+    vertical_force = (contact_stiffness*penetration**stiffness_exp -
+                      y_location)*(1 - contact_damping*velocity.dot(ground.y))
 
     # Friction force depends on velocity of the contact point relative to the
     # treadmill belt (which is moving backwards).
