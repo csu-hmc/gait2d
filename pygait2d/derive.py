@@ -147,6 +147,23 @@ class Symbolics():
         else:
             return []
 
+    @property
+    def joint_angles(self):
+        """qb, qc, qd, qe, qf, qg"""
+        return self.coordinates[3:]
+
+    @property
+    def joint_torques(self):
+        """Tb, Tc, Td, Te, Tf, Tg"""
+        if len(self.specifieds) == 6:
+            return self.specifieds
+        elif len(self.specifieds) == 9:
+            return self.specifieds[3:]
+        elif len(self.specifieds) == 7:
+            return self.specifieds[:-1]
+        elif len(self.specifieds) == 10:
+            return self.specifieds[3:-1]
+
 
 def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
     # joint_torques(phase) = mean_joint_torque + K*(joint_state_desired -
