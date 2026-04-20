@@ -339,6 +339,7 @@ def derive_equations_of_motion(
     treadmill=False,
     hand_of_god=True,
     stiffness_exp=3,
+    passive_torques=False,
 ):
     """Returns the equations of motion for the planar walking model along with
     all of the constants, coordinates, speeds, joint torques, visualization
@@ -368,6 +369,8 @@ def derive_equations_of_motion(
         the torso and a torque acting on the torso will be included.
     stiffness_exp : float, optional
         Exponent of the contact force stiffness force.
+    passive_torques : boolean, optional
+        If true, a nonlinear passive torque function is added.
 
     Returns
     =======
@@ -420,10 +423,12 @@ def derive_equations_of_motion(
     for label in sorted(segment_descriptions.keys()):
 
         segment_class, desc, joint_desc = segment_descriptions[label]
-
+        passive_torque = passive_torques  # true or false for this particular segment
+        
         if label == 'A':  # trunk
             parent_reference_frame = ground
             origin_joint = origin
+            passive_torque = False  # no passive torque between ground and trunk
         elif label == 'E':  # left thigh
             # For the left thigh, set the trunk and hip as the
             # reference_frame and origin joint.
@@ -434,7 +439,7 @@ def derive_equations_of_motion(
             origin_joint = segments[-1].joint
 
         segment = segment_class(label, desc, parent_reference_frame,
-                                origin_joint, joint_desc, ground)
+                                origin_joint, joint_desc, ground, passive_torque)
         segments.append(segment)
 
         # constants, coordinates, speeds, kinematic differential equations
