@@ -27,7 +27,7 @@ symbolics = derive.derive_equations_of_motion(treadmill=True, passive_torques=Tr
 
 # %%
 # Load a parameter mapping from pygait2d symbol to numerical value, as well as
-# a mappig of the symbol string to numerical value.
+# a mapping of the symbol string to numerical value.
 try:
     par_map = simulate.load_constants(symbolics.constants,
                                       'example_constants.yml')
