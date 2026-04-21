@@ -23,8 +23,8 @@ ic: 0.0624  # moment of inertia about mass center wrt to rshank reference frame 
 xc: 0.0     # x location of mass center wrt to the knee joint [m]
 yc: -0.1917 # y location of mass center wrt to the knee joint [m]
 lc: 0.4428  # joint to joint segment length [m]
-qminc: 2.8  # angle (rad) below which a quadratic passive torque is generated
-qmaxc: 0.0  # angle (rad) above which a quadratic passive torque is generated
+qminc: -2.8  # angle (rad) below which a quadratic passive torque is generated
+qmaxc:  0.0  # angle (rad) above which a quadratic passive torque is generated
 # rfoot
 md: 1.0875  # mass [kg]
 id: 0.0184  # moment of inertia about mass center wrt to rfoot reference frame [kg*m^2]
