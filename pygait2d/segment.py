@@ -201,7 +201,7 @@ class BodySegment(object):
             b =  1.0     # linear damping (Nms/rad)
             
             # turn the three terms off individually, for testing
-            # currently, just k1=0.0 makes it work.
+            # currently, setting k1 and k2 to zero makes it work.
             # k1 = 0.0;
             # k2 = 0.0;
             # b = 0.0;

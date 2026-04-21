@@ -15,16 +15,16 @@ ib: 0.1522 # moment of inertia about mass center wrt to rthigh reference frame [
 xb: 0.0    # local x location of mass center wrt to the hip joint [m]
 yb: -0.191 # local y location of mass center wrt to the hip joint [m]
 lb: 0.4410 # joint to joint segment length [m]
-qminb: -90.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxb: 160.0 # angle (deg) above which a quadratic passive torque is generated
+qminb: -1.5 # angle (rad) below which a quadratic passive torque is generated
+qmaxb:  2.8 # angle (rad) above which a quadratic passive torque is generated
 # rshank:
 mc: 3.4875  # mass [kg]
 ic: 0.0624  # moment of inertia about mass center wrt to rshank reference frame [kg*m^2]
 xc: 0.0     # x location of mass center wrt to the knee joint [m]
 yc: -0.1917 # y location of mass center wrt to the knee joint [m]
 lc: 0.4428  # joint to joint segment length [m]
-qminc: -160.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxc:    0.0 # angle (deg) above which a quadratic passive torque is generated
+qminc: 2.8  # angle (rad) below which a quadratic passive torque is generated
+qmaxc: 0.0  # angle (rad) above which a quadratic passive torque is generated
 # rfoot
 md: 1.0875  # mass [kg]
 id: 0.0184  # moment of inertia about mass center wrt to rfoot reference frame [kg*m^2]
@@ -33,24 +33,24 @@ yd: -0.0351 # local y location of mass center wrt to the ankle joint [m]
 hxd: -0.06  # local x location of heel wrt to the ankle joint [m]
 txd: 0.15   # local x location of toe wrt to the ankle joint [m]
 fyd: -0.07  # local y location of heel and toe relative to ankle joint [m]
-qmind: -90.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxd:  90.0 # angle (deg) above which a quadratic passive torque is generated
+qmind: -1.5 # angle (rad) below which a quadratic passive torque is generated
+qmaxd:  1.5 # angle (rad) above which a quadratic passive torque is generated
 # lthigh
 me: 7.5    # mass [kg]
 ie: 0.1522 # moment of inertia about mass center wrt to the lthigh reference frame[kg*m^2]
 xe: 0.0    # local x location of mass center wrt to the hip joint [m]
 ye: -0.191 # local y location of mass center wrt to the hip joint [m]
 le: 0.4410 # segment length [m]
-qmine: -90.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxe: 160.0 # angle (deg) above which a quadratic passive torque is generated
+qmine: -1.5 # angle (rad) below which a quadratic passive torque is generated
+qmaxe:  2.8 # angle (rad) above which a quadratic passive torque is generated
 # lshank
 mf: 3.4875  # mass [kg]
 if: 0.0624  # moment of inertia about mass center wrt to the lshank reference frame [kg*m^2]
 xf: 0.0     # local x location of mass center wrt to the knee joint [m]
 yf: -0.1917 # local y location of mass center wrt to the knee joint [m]
 lf: 0.4428  # segment length [m]
-qminf: -160.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxf:    0.0 # angle (deg) above which a quadratic passive torque is generated
+qminf: -2.8 # angle (rad) below which a quadratic passive torque is generated
+qmaxf:  0.0 # angle (rad) above which a quadratic passive torque is generated
 # lfoot
 mg: 1.0875  # mass [kg]
 ig: 0.0184  # moment of inertia about mass center wrt to the lfoot reference frame [kg*m^2]
@@ -59,8 +59,8 @@ yg: -0.0351 # local y location of mass center wrt to the ankle joint [m]
 hxg: -0.06  # local x location of heel wrt to the ankle joint [m]
 txg: 0.15   # local x location of toe wrt to the ankle joint [m]
 fyg: -0.07  # local y location of heel and toe relative to ankle joint [m]
-qming: -90.0 # angle (deg) below which a quadratic passive torque is generated
-qmaxg:  90.0 # angle (deg) above which a quadratic passive torque is generated
+qming: -1.5 # angle (rad) below which a quadratic passive torque is generated
+qmaxg:  1.5 # angle (rad) above which a quadratic passive torque is generated
 # contact
 kc: 5.0e+7  # ground contact stiffness, N/m^3
 cc: 0.85 # ground contact damping, s/m
