@@ -6,6 +6,7 @@ This example simulates and visualizes the uncontrolled motion of the model such
 that the model falls down on the treadmill. It also compares the evaluation
 speed of PyDy's and Autolev's models.
 """
+print("loading modules...")
 import timeit
 
 from algait2de.gait2de import evaluate_autolev_rhs
@@ -20,11 +21,13 @@ import yaml
 
 # %%
 # Derive the equations of motion, including a constant treadmill motion.
-symbolics = derive.derive_equations_of_motion(treadmill=True)
+print("deriving equations of motion...")
+# symbolics = derive.derive_equations_of_motion(treadmill=True)
+symbolics = derive.derive_equations_of_motion(treadmill=True, passive_torques=True)
 
 # %%
 # Load a parameter mapping from pygait2d symbol to numerical value, as well as
-# a mappig of the symbol string to numerical value.
+# a mapping of the symbol string to numerical value.
 try:
     par_map = simulate.load_constants(symbolics.constants,
                                       'example_constants.yml')
@@ -58,7 +61,7 @@ rhs = generate_ode_function(
 # %%
 # Prepare numerical arrays to be passed to the ODE functions.
 specifieds_vals = np.zeros(len(symbolics.specifieds))
-specifieds_vals[-1] = 1.0
+specifieds_vals[-1] = 1.0  # treadmill speed
 
 args = (specifieds_vals, np.array(list(par_map.values())))
 
@@ -86,6 +89,7 @@ print('Autolev evaluation time:',
 # Simulate the model for two seconds using the LSODA integrator (switches
 # between stiff and non-stiff modes).
 time_vector = np.linspace(0.0, 2.0, num=61)
+print("simulating...")
 trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 
 # %%

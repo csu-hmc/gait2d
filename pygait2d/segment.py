@@ -57,7 +57,7 @@ class BodySegment(object):
     viz_cylinder_radius = 0.035  # meters
 
     def __init__(self, label, description, parent_reference_frame,
-                 origin_joint, joint_description, inertial_frame):
+                 origin_joint, joint_description, inertial_frame, passive_torque=False):
         """Initializes a body segment."""
 
         self.label = label
@@ -66,6 +66,7 @@ class BodySegment(object):
         self.origin_joint = origin_joint
         self.joint_description = joint_description
         self.inertial_frame = inertial_frame
+        self.passive_torque = passive_torque;
 
         self._create_symbols()
         self._kinematic_differential_equations()
@@ -111,6 +112,13 @@ class BodySegment(object):
                           self.length_symbol,
                           self.mass_center_x_symbol,
                           self.mass_center_y_symbol]
+
+        if self.passive_torque:
+            # we need these constants to define the passive range of motion
+            self.qmin_symbol = symbols('qmin{}'.format(subscript), **sym_kwargs)
+            self.qmax_symbol = symbols('qmax{}'.format(subscript), **sym_kwargs)
+            self.constants.append(self.qmin_symbol)
+            self.constants.append(self.qmax_symbol)
 
         # functions of time
         self.generalized_coordinate_symbol = \
@@ -183,8 +191,33 @@ class BodySegment(object):
 
     def _joint_torque(self):
         """Creates the joint torque vector acting on the segment."""
-        self.torque = self.joint_torque_symbol * self.reference_frame.z
-        # TODO : add in passive joint stiffness and damping
+        torque = self.joint_torque_symbol
+        
+        # add in passive joint stiffness and damping
+        if self.passive_torque:
+            # hard-coded parameters, these are not critical
+            k1 = 1.0     # linear stiffness (Nm/rad)
+            k2 = 5000.0  # quadratic stiffness (Nm/rad^2) applied when outside the qmin to qmax range
+            b =  1.0     # linear damping (Nms/rad)
+            
+            # turn the three terms off individually, for testing
+            # currently, setting k1 and k2 to zero makes it work.
+            # k1 = 0.0;
+            # k2 = 0.0;
+            # b = 0.0;
+            
+            # add a weak linear stiffness and damping
+            torque += -k1 * self.generalized_coordinate_symbol - b * self.generalized_speed_symbol
+            
+            # add quadratic stiffness when angle is outside the range qmin to qmax
+            qmaxdiff = self.generalized_coordinate_symbol - self.qmax_symbol
+            qmaxpenetration = (Abs(qmaxdiff) + qmaxdiff) / 2    # this is a positive value
+            qmindiff = self.qmin_symbol - self.generalized_coordinate_symbol 
+            qminpenetration = (Abs(qmindiff) + qmindiff) / 2    # this is a positive value
+            torque += -k2 * (qmaxpenetration**2 - qminpenetration**2);
+            
+        # apply this torque on the Z axis of the segment
+        self.torque = torque * self.reference_frame.z
 
     def _gravity(self):
         """Creates the gravitational force vector acting on the segment."""
