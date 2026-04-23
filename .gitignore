@@ -1,3 +1,12 @@
+## gait2d ##
+
+# sphinx-gallery
+docs/examples/
+docs/sg_execution_times.rst
+
+# Cython generated file:
+algait2de/gait2de.c
+
 ## Python ##
 
 # Byte-compiled / optimized / DLL files
