@@ -6,7 +6,6 @@ This example simulates and visualizes the uncontrolled motion of the model such
 that the model falls down on the treadmill. It also compares the evaluation
 speed of PyDy's and Autolev's models.
 """
-print("loading modules...")
 import timeit
 
 from algait2de.gait2de import evaluate_autolev_rhs
@@ -20,10 +19,10 @@ import sympy as sm
 import yaml
 
 # %%
-# Derive the equations of motion, including a constant treadmill motion.
-print("deriving equations of motion...")
-# symbolics = derive.derive_equations_of_motion(treadmill=True)
-symbolics = derive.derive_equations_of_motion(treadmill=True, passive_torques=True)
+# Derive the equations of motion, including a constant treadmill motion and
+# passive joint torques.
+symbolics = derive.derive_equations_of_motion(treadmill=True,
+                                              passive_torques=True)
 
 # %%
 # Load a parameter mapping from pygait2d symbol to numerical value, as well as
@@ -42,7 +41,7 @@ except FileNotFoundError:
 # %%
 # Use PyDy to generate a function that can evaluate the right hand side of the
 # ordinary differential equations of the multibody system. This uses PyDy's
-# code geenration settings that result in the fastest numerical evaluation
+# code generation settings that result in the fastest numerical evaluation
 # times at the cost of a slower code generation and compilation time.
 rhs = generate_ode_function(
     symbolics.kanes_method.forcing,
@@ -89,7 +88,6 @@ print('Autolev evaluation time:',
 # Simulate the model for two seconds using the LSODA integrator (switches
 # between stiff and non-stiff modes).
 time_vector = np.linspace(0.0, 2.0, num=61)
-print("simulating...")
 trajectories = odeint(rhs, initial_conditions, time_vector, args=args)
 
 # %%
