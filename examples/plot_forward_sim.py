@@ -59,7 +59,7 @@ rhs = generate_ode_function(
 
 # %%
 # Prepare numerical arrays to be passed to the ODE functions.
-specifieds_vals = np.zeros(len(symbolics.specifieds))
+specifieds_vals = np.zeros(len(symbolics.specifieds))  # zero torques
 specifieds_vals[-1] = 1.0  # treadmill speed
 
 args = (specifieds_vals, np.array(list(par_map.values())))

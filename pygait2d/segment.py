@@ -200,12 +200,6 @@ class BodySegment(object):
             k2 = 5000.0  # quadratic stiffness (Nm/rad^2) applied when outside the qmin to qmax range
             b =  1.0     # linear damping (Nms/rad)
             
-            # turn the three terms off individually, for testing
-            # currently, setting k1 and k2 to zero makes it work.
-            # k1 = 0.0;
-            # k2 = 0.0;
-            # b = 0.0;
-            
             # add a weak linear stiffness and damping
             torque += -k1 * self.generalized_coordinate_symbol - b * self.generalized_speed_symbol
             
