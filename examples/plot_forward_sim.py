@@ -22,8 +22,10 @@ import yaml
 # Derive the equations of motion, including a constant treadmill motion and
 # passive joint torques.
 symbolics = derive.derive_equations_of_motion(treadmill=True,
-                                              passive_torques=True)
-
+                                              passive_torques=True,
+                                              stiffness_exp=3,
+                                              )
+                                              
 # %%
 # Load a parameter mapping from pygait2d symbol to numerical value, as well as
 # a mapping of the symbol string to numerical value.

@@ -7,7 +7,7 @@ This example replicates a similar predictive simulation solution as shown in
 [1]_.
 
 The optimal control goal is to find the open-loop joint torque trajectories for
-hip, knee, and ankle torques that generate a minimal mean-torque periodic
+hip, knee, and ankle torques that generate a minimal mean-squared-torque periodic
 motion to ambulate at a specified average speed.
 
 .. note::
@@ -33,12 +33,14 @@ from pygait2d.utils import plot, animate
 # trunk.
 symbolics = derive_equations_of_motion(
     prevent_ground_penetration=False,
+    stiffness_exp=2,
     hand_of_god=False,
+    passive_torques=True,
 )
 
 # %%
 # The equations of motion have this many mathematical operations:
-eom = symbolics.equations_of_motion
+eom = symbolics.equations_of_motion / 10.0
 sm.count_ops(eom)
 
 # %%
@@ -77,7 +79,6 @@ try:
 except FileNotFoundError:
     par_map = load_constants(symbolics.constants,
                              'examples/example_constants.yml')
-par_map
 
 # %%
 # First solve a simple two-node standing solution to generate an initial guess
@@ -100,11 +101,11 @@ par_map[speed] = 0.0
 # - Only let the hip, knee, and ankle flex and extend to realistic limits.
 # - Put a maximum on the peak torque values.
 bounds = {
-    h: (0.005, 0.1),
+    h: (0.005, 0.015),  # with 50 nodes, this allows duration from 250 ms to 750 ms
     delt: (0.0, 10.0),
     qax: (0.0, 10.0),
-    qay: (0.5, 1.5),
-    qa: np.deg2rad((-60.0, 60.0)),
+    qay: (0.75, 1.5),
+    qa: np.deg2rad((-30.0, 30.0)),
     uax: (0.0, 10.0),
     uay: (-10.0, 10.0),
 }
@@ -154,22 +155,16 @@ instance_constraints = (
 
 
 # %%
-# The objective is to minimize the mean of all joint torques.
+# The objective is to minimize the mean of squared joint torques.
 def obj(prob, free):
-    """Minimize the sum of the squares of the control torques."""
-    interval = prob.extract_values(free, h)[0]
     torques = prob.extract_values(free, *symbolics.specifieds)
-    return interval*np.sum(torques**2)
-
+    return 0.01*np.mean(torques**2)
 
 def obj_grad(prob, free):
-    interval = prob.extract_values(free, h)[0]
     torques = prob.extract_values(free, *symbolics.specifieds)
     grad = np.zeros_like(free)
-    prob.fill_free(grad, 2.0*interval*torques, *symbolics.specifieds)
-    prob.fill_free(grad, np.sum(torques**2), h)
+    prob.fill_free(grad, 0.01*2.0*torques/torques.size, *symbolics.specifieds)
     return grad
-
 
 # %%
 # Create an optimization problem and solve it.
@@ -191,8 +186,9 @@ prob = Problem(
 # %%
 # Find the optimal standing solution.
 initial_guess = np.zeros(prob.num_free)
-initial_guess += np.random.normal(0.0, 0.01, size=initial_guess.shape)
-initial_guess[-1] = 0.02
+np.random.seed(0)   # to make sure that this always gives the same result
+#initial_guess += np.random.normal(0.0, 0.001, size=initial_guess.shape)
+initial_guess[-1] = 0.01
 solution, info = prob.solve(initial_guess)
 
 # %%
@@ -245,6 +241,8 @@ prob = Problem(
     parallel=True,
     tmp_dir='codegen',
 )
+prob.add_option('tol', 1e-3)
+prob.add_option('constr_viol_tol', 1e-4)
 
 # %%
 # Solve the optimization problem for increasing walking speeds using the
