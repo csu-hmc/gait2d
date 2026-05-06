@@ -40,7 +40,7 @@ symbolics = derive_equations_of_motion(
 
 # %%
 # The equations of motion have this many mathematical operations:
-eom = symbolics.equations_of_motion / 10.0
+eom = 0.001 * symbolics.equations_of_motion  # scale them down
 sm.count_ops(eom)
 
 # %%
@@ -249,7 +249,7 @@ prob.add_option('constr_viol_tol', 1e-4)
 # standing solution as the first initial guess and using the prior solution as
 # the subsequent guesses.
 solution = initial_guess
-for new_speed in np.linspace(0.01, 1.3, num=8):
+for new_speed in np.linspace(0.01, 1.3, num=15):
     par_map[speed] = new_speed
     print(f"Running optimization for walking speed: "
           f"{prob.collocator.known_parameter_map[speed]}")
