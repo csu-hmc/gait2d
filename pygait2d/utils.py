@@ -307,14 +307,15 @@ def plot(sym, times, x, r, p, follow=None):
 
     # show ground reaction force vectors at the heels and toes, scaled to
     # visually reasonable length
-    #scene.add_vector(contact_force(rfoot.toe, ground, origin, v)/600.0,
-                        #rfoot.toe, color="tab:blue")
-    #scene.add_vector(contact_force(rfoot.heel, ground, origin, v)/600.0,
-                        #rfoot.heel, color="tab:blue")
-    #scene.add_vector(contact_force(lfoot.toe, ground, origin, v)/600.0,
-                        #lfoot.toe, color="tab:blue")
-    #scene.add_vector(contact_force(lfoot.heel, ground, origin, v)/600.0,
-                        #lfoot.heel, color="tab:blue")
+    grf = sym.ground_reaction_forces
+    scene.add_vector(grf['Right Foot toe']/600.0, rfoot.toe,
+                     color="tab:blue")
+    scene.add_vector(grf['Right Foot heel']/600.0, rfoot.heel,
+                     color="tab:blue")
+    scene.add_vector(grf['Left Foot toe']/600.0, lfoot.toe,
+                     color="tab:blue")
+    scene.add_vector(grf['Left Foot heel']/600.0, lfoot.heel,
+                     color="tab:blue")
 
     scene.lambdify_system(sym.states + sym.specifieds + sym.constants)
     scene.evaluate_system(*np.hstack((x, r, p)))

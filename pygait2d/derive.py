@@ -60,6 +60,8 @@ class Symbolics():
     speeds : list of Function(t)
         The generalized speeds of the system.
     states : list of Function(t)
+    ground_reaction_forces : dictionary
+        Force vectors acting on the right and left foot toe and heel points.
 
     """
     # TODO : Add these as properties.
@@ -163,6 +165,20 @@ class Symbolics():
             return self.specifieds[:-1]
         elif len(self.specifieds) == 10:
             return self.specifieds[3:-1]
+
+    @property
+    def ground_reaction_forces(self):
+        """Returns a dictionary the ground reaction force vectors expressed in
+        the inertial reference frame acting on the heel and toe of each foot.
+        Keys are ``'Right Foot heel', 'Right Foot toe', 'Left Foot heel',
+        'Left Foot toe'``."""
+        grfs = {}
+        for load in self.kanes_method.loads:
+            point_name = load[0].name
+            if point_name in ['Right Foot heel', 'Right Foot toe',
+                              'Left Foot heel', 'Left Foot toe']:
+                grfs[point_name] = load[1]
+        return grfs
 
 
 def generate_gait_cycle_torque_controller(coordinates, speeds, specified):
@@ -424,7 +440,7 @@ def derive_equations_of_motion(
 
         segment_class, desc, joint_desc = segment_descriptions[label]
         passive_torque = passive_torques  # true or false for this particular segment
-        
+
         if label == 'A':  # trunk
             parent_reference_frame = ground
             origin_joint = origin
