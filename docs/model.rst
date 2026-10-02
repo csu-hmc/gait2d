@@ -292,10 +292,10 @@ Specified inputs
   to inertial origin
 - ``Ta``: "hand of god", torque acting on trunk relative to inertial frame
 - ``Tb``: hip joint torque, ``Tb>0`` extends the hip
-- ``Tc``: knee joint torque, ``Tc>0`` abducts the knee
+- ``Tc``: knee joint torque, ``Tc>0`` extends the knee
 - ``Td``: ankle joint torque, ``Td>0`` plantarflexes the foot
 - ``Te``: hip joint torque, ``Te>0`` extends the hip
-- ``Tf``: knee joint torque, ``Tf>0`` abducts the knee
+- ``Tf``: knee joint torque, ``Tf>0`` extends the knee
 - ``Tg``: ankle joint torque, ``Tg>0`` plantarflexes the foot
 - ``v`` : treadmill belt speed
 - ``e_ilio_r``: muscle excitation
