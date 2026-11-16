@@ -476,7 +476,7 @@ def derive_equations_of_motion(
         external_forces_torques.append((segment.mass_center,
                                         segment.gravity))
 
-        # joint torques
+        # joint torques, positive joint torque causes positive angle
         if label == 'A' and not hand_of_god:
             pass
         else:

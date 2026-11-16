@@ -291,12 +291,12 @@ Specified inputs
 - ``Fax, Fay``: "hand of god", forces acting on the trunk mass center relative
   to inertial origin
 - ``Ta``: "hand of god", torque acting on trunk relative to inertial frame
-- ``Tb``: hip joint torque, ``Tb>0`` extends the hip
+- ``Tb``: hip joint torque, ``Tb>0`` flexes the hip
 - ``Tc``: knee joint torque, ``Tc>0`` extends the knee
-- ``Td``: ankle joint torque, ``Td>0`` plantarflexes the foot
-- ``Te``: hip joint torque, ``Te>0`` extends the hip
+- ``Td``: ankle joint torque, ``Td>0`` dorsiflexes the foot
+- ``Te``: hip joint torque, ``Te>0`` flexes the hip
 - ``Tf``: knee joint torque, ``Tf>0`` extends the knee
-- ``Tg``: ankle joint torque, ``Tg>0`` plantarflexes the foot
+- ``Tg``: ankle joint torque, ``Tg>0`` dorsiflexes the foot
 - ``v`` : treadmill belt speed
 - ``e_ilio_r``: muscle excitation
 - ``e_hams_r``: muscle excitation
